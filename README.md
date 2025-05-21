@@ -24,8 +24,9 @@ Um sistema completo para gerenciar comandas em bares e restaurantes, com aplicat
 ## 🌐 Frontend Web (Next.js)
 
 **Página do Cliente** (acessada via QR Code):
-✔ Visualização da comanda em tempo real e com detalhes
-✔ Opção para chamar o garçom ou solicitar fechamento
+
+- ✔ Visualização da comanda em tempo real e com detalhes
+- ✔ Opção para chamar o garçom ou solicitar fechamento
 
 ---
 
@@ -35,20 +36,7 @@ Um sistema completo para gerenciar comandas em bares e restaurantes, com aplicat
   - Comandas, pedidos, cardápio, pagamentos
   - Autenticação (JWT)
   - Geração de links únicos (UUID/short hash)
-
----
-
-## 🗃️ Banco de Dados (PostgreSQL + Prisma ORM)
-
-| Tabela             | Descrição                   |
-| ------------------ | --------------------------- |
-| `users`            | Usuários (garçons, donos)   |
-| `bars`             | Estabelecimentos            |
-| `menus`            | Itens do cardápio           |
-| `orders`           | Pedidos                     |
-| `commands`         | Comandas                    |
-| `items_in_command` | Itens vinculados a comandas |
-| `payments`         | Registros de pagamento      |
+  - Banco de Dados (PostgreSQL + Prisma ORM)
 
 ---
 
@@ -64,11 +52,11 @@ Um sistema completo para gerenciar comandas em bares e restaurantes, com aplicat
 
 ### **App Web Next.JS**
 
-| Funcionalidade                                                            | Descrição                         |
-| ------------------------------------------------------------------------- | --------------------------------- |
-| ✅ Visualização da comanda em tempo real e com detalhes através de QRcode | Suporte a vários estabelecimentos |
+| Funcionalidade                                    | Descrição                                                                    |
+| ------------------------------------------------- | ---------------------------------------------------------------------------- |
+| ✅ Página de visualização de comanda para cliente | Visualização da comanda detalhada para clientes com acesso através de QRcode |
 
-## 🛠️ Stack Tecnológica
+## 🛠️ Stacks Utilizadas
 
 | Tecnologia       | Uso                                 |
 | ---------------- | ----------------------------------- |
