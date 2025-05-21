@@ -11,5 +11,83 @@ generator client {
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  // directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id       String           @id @default(uuid())
+  email    String           @unique
+  password String
+  role     UserRole
+  bars     Bar[]            @relation("OwnerBars")
+  commandsOpened Command[]  @relation("CommandOpenedBy")
+  commandsClosed Command[]  @relation("CommandClosedBy")
+}
+
+model Bar {
+  id       String   @id @default(uuid())
+  name     String
+  owner    User     @relation("OwnerBars", fields: [ownerId], references: [id])
+  ownerId  String
+
+  itens    MenuItem[]
+  tables   Table[]
+  commands Command[]
+}
+
+model MenuItem {
+  id     String @id @default(uuid())
+  name   String
+  price  Float
+  bar    Bar    @relation(fields: [barId], references: [id])
+  barId  String
+
+  CommandItem CommandItem[]
+}
+
+model Table {
+  id     String @id @default(uuid())
+  number Int
+  bar    Bar    @relation(fields: [barId], references: [id])
+  barId  String
+
+  Command Command[]
+}
+
+model Command {
+  id         String         @id @default(uuid())
+  table      Table          @relation(fields: [tableId], references: [id])
+  tableId    String
+  bar        Bar            @relation(fields: [barId], references: [id])
+  barId      String
+  openedBy   User           @relation("CommandOpenedBy", fields: [openedById], references: [id])
+  openedById String
+  closedBy   User           @relation("CommandClosedBy", fields: [closedById], references: [id])
+  closedById String
+  status     CommandStatus
+  publicHash String         @unique
+  items      CommandItem[]
+  total      Float          @default(0)
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+}
+
+model CommandItem {
+  id            String      @id @default(uuid())
+  command       Command     @relation(fields: [commandId], references: [id])
+  commandId     String
+  menuItem      MenuItem    @relation(fields: [menuItemId], references: [id])
+  menuItemId    String
+  quantity      Int
+  notes         String?
+}
+
+enum UserRole {
+  OWNER
+  WAITER
+}
+
+enum CommandStatus {
+  OPEN
+  CLOSED
 }
