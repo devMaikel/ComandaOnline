@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
 
 const prisma = new PrismaClient();
+
 export async function POST(req: Request) {
   const { email, password } = await req.json();
 
@@ -20,7 +21,9 @@ export async function POST(req: Request) {
         role: "OWNER",
       },
     });
-    return NextResponse.json(user);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password, ...userWithoutPassword } = user;
+    return NextResponse.json(userWithoutPassword);
   } catch (error: unknown) {
     if (error instanceof Error) {
       return NextResponse.json(
@@ -32,3 +35,50 @@ export async function POST(req: Request) {
     return NextResponse.json({ message: "Erro desconhecido" }, { status: 500 });
   }
 }
+
+/**
+ * @swagger
+ * /api/users/register-owner:
+ *   post:
+ *     summary: Cria um novo usuário do tipo OWNER
+ *     tags:
+ *       - Usuários
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               password:
+ *                 type: string
+ *                 format: password
+ *     responses:
+ *       201:
+ *         description: Usuário criado com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: string
+ *                 email:
+ *                   type: string
+ *                 role:
+ *                   type: string
+ *                   enum: [OWNER, WAITER]
+ *                 ownerId:
+ *                   type: string
+ *                   nullable: true
+ *       400:
+ *         description: Usuário já existe
+ *       500:
+ *         description: Erro no servidor
+ */

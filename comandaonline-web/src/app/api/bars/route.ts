@@ -198,3 +198,268 @@ export async function DELETE(req: Request) {
     return NextResponse.json({ message: "Erro desconhecido" }, { status: 500 });
   }
 }
+
+/**
+ * @swagger
+ * /api/bars:
+ *   post:
+ *     summary: Cria um novo bar
+ *     description: Apenas usuários com papel OWNER podem criar bares.
+ *     tags:
+ *       - Bares
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: Bar do João
+ *     responses:
+ *       201:
+ *         description: Bar criado com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Bar'
+ *       400:
+ *         description: Nome do bar inválido ou já existente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Nome do bar é obrigatório
+ *       401:
+ *         description: Token inválido
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Token inválido
+ *       403:
+ *         description: Permissão negada
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Apenas administradores podem criar bares
+ *       500:
+ *         description: Erro interno do servidor
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Erro ao criar o bar
+ *                 error:
+ *                   type: string
+ *
+ *   get:
+ *     summary: Lista bares visíveis para o usuário
+ *     description: Owners veem seus próprios bares. Waiters veem bares do seu Owner.
+ *     tags:
+ *       - Bares
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lista de bares retornada com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Bar'
+ *       401:
+ *         description: Token inválido
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Token inválido
+ *       403:
+ *         description: Permissão negada
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Permissão negada para acessar os bares
+ *       500:
+ *         description: Erro ao buscar bares
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Erro ao buscar bares
+ *                 error:
+ *                   type: string
+ *
+ *   put:
+ *     summary: Atualiza o nome de um bar
+ *     tags:
+ *       - Bares
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - id
+ *               - name
+ *             properties:
+ *               id:
+ *                 type: string
+ *                 format: uuid
+ *               name:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Bar atualizado com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Bar'
+ *       400:
+ *         description: Dados inválidos
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: ID e novo nome do bar são obrigatórios
+ *       401:
+ *         description: Token inválido
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Token inválido
+ *       404:
+ *         description: Bar não encontrado ou acesso negado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Bar não encontrado ou acesso negado
+ *       500:
+ *         description: Erro ao atualizar o bar
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Erro ao atualizar o bar
+ *                 error:
+ *                   type: string
+ *
+ *   delete:
+ *     summary: Deleta um bar
+ *     tags:
+ *       - Bares
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - id
+ *             properties:
+ *               id:
+ *                 type: string
+ *                 format: uuid
+ *     responses:
+ *       200:
+ *         description: Bar deletado com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Bar deletado com sucesso
+ *       400:
+ *         description: ID do bar ausente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: ID do bar é obrigatório
+ *       401:
+ *         description: Token inválido
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Token inválido
+ *       404:
+ *         description: Bar não encontrado ou acesso negado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Bar não encontrado ou acesso negado
+ *       500:
+ *         description: Erro ao deletar o bar
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Erro ao deletar o bar
+ *                 error:
+ *                   type: string
+ */

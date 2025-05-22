@@ -43,3 +43,67 @@ export async function POST(req: Request) {
     return NextResponse.json({ message: "Erro desconhecido" }, { status: 500 });
   }
 }
+
+/**
+ * @swagger
+ * /users/login:
+ *   post:
+ *     summary: Login do usuário
+ *     description: Autentica o usuário e retorna um token JWT para uso nas requisições autenticadas.
+ *     tags:
+ *       - Usuários
+ *     requestBody:
+ *       description: Credenciais do usuário para login
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: usuario@example.com
+ *               password:
+ *                 type: string
+ *                 format: password
+ *                 example: senha123
+ *     responses:
+ *       200:
+ *         description: Login realizado com sucesso, retorna token JWT
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 token:
+ *                   type: string
+ *                   description: Token JWT para autenticação
+ *                   example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+ *       400:
+ *         description: Credenciais inválidas (email ou senha incorretos)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Credenciais inválidas
+ *       500:
+ *         description: Erro interno do servidor
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Erro no servidor
+ *                 error:
+ *                   type: string
+ *                   example: Detalhes do erro
+ */
