@@ -11,15 +11,18 @@ generator client {
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
-  // directUrl = env("DIRECT_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model User {
-  id       String           @id @default(uuid())
-  email    String           @unique
-  password String
-  role     UserRole
-  bars     Bar[]            @relation("OwnerBars")
+  id             String     @id @default(uuid())
+  email          String     @unique
+  password       String
+  role           UserRole
+  bars           Bar[]      @relation("OwnerBars")
+  ownerId        String?          
+  owner          User?      @relation("WaiterOwner", fields: [ownerId], references: [id])
+  waiters        User[]     @relation("WaiterOwner")
   commandsOpened Command[]  @relation("CommandOpenedBy")
   commandsClosed Command[]  @relation("CommandClosedBy")
 }
