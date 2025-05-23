@@ -1,19 +1,8 @@
 import { PrismaClient } from "@prisma/client";
 import { NextResponse } from "next/server";
-import { verifyToken } from "@/lib/auth";
+import { getUserFromHeader } from "@/lib/auth";
 
 const prisma = new PrismaClient();
-
-async function getUserFromHeader(req: Request) {
-  const authHeader = req.headers.get("authorization");
-
-  if (!authHeader?.startsWith("Bearer ")) {
-    return null;
-  }
-
-  const token = authHeader.split(" ")[1];
-  return await verifyToken(token);
-}
 
 export async function POST(req: Request) {
   const user = await getUserFromHeader(req);

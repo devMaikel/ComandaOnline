@@ -1,16 +1,8 @@
 import { PrismaClient } from "@prisma/client";
 import { NextResponse } from "next/server";
-import { verifyToken } from "@/lib/auth";
+import { getUserFromHeader } from "@/lib/auth";
 
 const prisma = new PrismaClient();
-
-export async function getUserFromHeader(req: Request) {
-  const authHeader = req.headers.get("authorization");
-  if (!authHeader?.startsWith("Bearer ")) return null;
-
-  const token = authHeader.split(" ")[1];
-  return await verifyToken(token);
-}
 
 export async function POST(req: Request) {
   const user = await getUserFromHeader(req);
@@ -228,6 +220,66 @@ export async function PATCH(req: Request) {
     if (error instanceof Error) {
       return NextResponse.json(
         { message: "Erro ao atualizar item", error: error.message },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ message: "Erro desconhecido" }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: Request) {
+  const user = await getUserFromHeader(req);
+
+  if (!user) {
+    return NextResponse.json({ message: "Token inválido" }, { status: 401 });
+  }
+
+  const { searchParams } = new URL(req.url);
+  const itemId = searchParams.get("itemId");
+
+  if (!itemId) {
+    return NextResponse.json(
+      { message: "itemId é obrigatório" },
+      { status: 400 }
+    );
+  }
+
+  try {
+    const item = await prisma.menuItem.findUnique({
+      where: { id: itemId, deletedAt: null },
+      include: { bar: true },
+    });
+
+    if (!item) {
+      return NextResponse.json(
+        { message: "Item não encontrado" },
+        { status: 404 }
+      );
+    }
+
+    const isOwnerAccess = user.role === "OWNER" && item.bar.ownerId === user.id;
+
+    if (!isOwnerAccess) {
+      return NextResponse.json(
+        { message: "Apenas o dono do bar pode deletar um item" },
+        { status: 403 }
+      );
+    }
+
+    await prisma.menuItem.update({
+      where: { id: itemId },
+      data: { deletedAt: new Date() },
+    });
+
+    return NextResponse.json(
+      { message: "Item deletado com sucesso" },
+      { status: 200 }
+    );
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      return NextResponse.json(
+        { message: "Erro ao deletar item", error: error.message },
         { status: 500 }
       );
     }
@@ -494,6 +546,91 @@ export async function PATCH(req: Request) {
  *                 message:
  *                   type: string
  *                   example: Erro ao atualizar item
+ *                 error:
+ *                   type: string
+ *                   example: Detalhes do erro
+ */
+
+/**
+ * @swagger
+ * /api/menu-items:
+ *   delete:
+ *     summary: Deletar um item do menu
+ *     description: Remove logicamente um item do menu marcando-o como deletado. Apenas o dono do bar (OWNER) pode deletar.
+ *     tags:
+ *       - MenuItems
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: itemId
+ *         required: true
+ *         description: ID do item do menu a ser deletado
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *           example: b0acb77e-33ea-4125-8f36-dfc88767070f
+ *     responses:
+ *       200:
+ *         description: Item deletado com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Item deletado com sucesso
+ *       400:
+ *         description: ID do item não informado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: ID do item é obrigatório
+ *       401:
+ *         description: Token inválido ou não autenticado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Token inválido
+ *       403:
+ *         description: Acesso negado para deletar item (não é dono do bar)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Apenas o dono do bar pode deletar um item
+ *       404:
+ *         description: Item não encontrado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Item não encontrado
+ *       500:
+ *         description: Erro interno ao deletar item
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Erro ao deletar item
  *                 error:
  *                   type: string
  *                   example: Detalhes do erro

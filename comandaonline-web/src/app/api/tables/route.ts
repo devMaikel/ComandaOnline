@@ -111,6 +111,127 @@ export async function POST(req: Request) {
   return NextResponse.json(created, { status: 201 });
 }
 
+export async function DELETE(req: Request) {
+  const user = await getUserFromHeader(req);
+
+  if (!user) {
+    return NextResponse.json({ message: "Token inválido" }, { status: 401 });
+  }
+
+  const { searchParams } = new URL(req.url);
+  const tableId = searchParams.get("tableId");
+
+  if (!tableId) {
+    return NextResponse.json(
+      { message: "tableId é obrigatório" },
+      { status: 400 }
+    );
+  }
+
+  const table = await prisma.table.findUnique({
+    where: { id: tableId, deletedAt: null },
+    include: { bar: true },
+  });
+
+  if (!table || table.deletedAt) {
+    return NextResponse.json(
+      { message: "Mesa não encontrada" },
+      { status: 404 }
+    );
+  }
+
+  const isOwnerAccess = user.role === "OWNER" && table.bar.ownerId === user.id;
+
+  if (!isOwnerAccess) {
+    return NextResponse.json(
+      { message: "Apenas o dono do bar pode deletar mesas" },
+      { status: 403 }
+    );
+  }
+
+  await prisma.table.update({
+    where: { id: tableId },
+    data: { deletedAt: new Date() },
+  });
+
+  return NextResponse.json(
+    { message: "Mesa excluída com sucesso" },
+    { status: 200 }
+  );
+}
+
+/**
+ * @swagger
+ * /api/tables:
+ *   delete:
+ *     summary: Exclui uma mesa (soft delete)
+ *     description: Remove logicamente uma mesa de um bar. Apenas o dono do bar (OWNER) pode excluir mesas. Requer autenticação.
+ *     tags:
+ *       - Mesas
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: tableId
+ *         required: true
+ *         description: ID da mesa a ser excluída
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *           example: table-uuid-1234
+ *     responses:
+ *       200:
+ *         description: Mesa excluída com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Mesa excluída com sucesso
+ *       400:
+ *         description: ID da mesa não fornecido
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: ID da mesa é obrigatório
+ *       401:
+ *         description: Token JWT inválido ou ausente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Token inválido
+ *       403:
+ *         description: Acesso negado. Apenas o dono do bar pode excluir mesas
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Apenas o dono do bar pode deletar mesas
+ *       404:
+ *         description: Mesa não encontrada
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Mesa não encontrada
+ */
+
 /**
  * @swagger
  * /api/tables:
