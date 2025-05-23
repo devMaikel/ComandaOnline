@@ -7,6 +7,19 @@ const prisma = new PrismaClient();
 export async function POST(req: Request) {
   const { email, password } = await req.json();
 
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  if (!emailRegex.test(email)) {
+    return NextResponse.json({ message: "E-mail inválido" }, { status: 400 });
+  }
+
+  if (password.length < 6) {
+    return NextResponse.json(
+      { message: "A senha deve ter no mínimo 6 caracteres" },
+      { status: 400 }
+    );
+  }
+
   const existingUser = await prisma.user.findUnique({
     where: { email, deletedAt: null },
   });
