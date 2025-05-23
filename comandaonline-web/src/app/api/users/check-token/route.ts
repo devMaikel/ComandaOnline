@@ -26,7 +26,7 @@ export async function POST(req: Request) {
       process.env.JWT_SECRET as string
     ) as JwtPayload;
     const user = await prisma.user.findUnique({
-      where: { id: decoded.userId },
+      where: { id: decoded.userId, deletedAt: null },
       select: {
         id: true,
         email: true,

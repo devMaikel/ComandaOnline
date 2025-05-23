@@ -17,11 +17,19 @@ export async function verifyToken(token: string): Promise<User | null> {
     ) as JwtPayload;
 
     const user = await prisma.user.findUnique({
-      where: { id: decoded.userId },
+      where: { id: decoded.userId, deletedAt: null },
     });
 
     return user;
   } catch {
     return null;
   }
+}
+
+export async function getUserFromHeader(req: Request) {
+  const authHeader = req.headers.get("authorization");
+  if (!authHeader?.startsWith("Bearer ")) return null;
+
+  const token = authHeader.split(" ")[1];
+  return await verifyToken(token);
 }

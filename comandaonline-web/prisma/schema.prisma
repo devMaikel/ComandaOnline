@@ -15,16 +15,18 @@ datasource db {
 }
 
 model User {
-  id             String     @id @default(uuid())
-  email          String     @unique
-  password       String
-  role           UserRole
-  bars           Bar[]      @relation("OwnerBars")
-  ownerId        String?          
-  owner          User?      @relation("WaiterOwner", fields: [ownerId], references: [id])
-  waiters        User[]     @relation("WaiterOwner")
-  commandsOpened Command[]  @relation("CommandOpenedBy")
-  commandsClosed Command[]  @relation("CommandClosedBy")
+  id                String     @id @default(uuid())
+  email             String     @unique
+  password          String
+  role              UserRole
+  bars              Bar[]      @relation("OwnerBars")
+  ownerId           String?          
+  owner             User?      @relation("WaiterOwner", fields: [ownerId], references: [id])
+  waiters           User[]     @relation("WaiterOwner")
+  commandsOpened    Command[]  @relation("CommandOpenedBy")
+  commandsClosed    Command[]  @relation("CommandClosedBy")
+  commandItemAdded  CommandItem[]  @relation("CommandItemAddedBy")
+  deletedAt         DateTime?
 }
 
 model Bar {
@@ -36,6 +38,7 @@ model Bar {
   itens    MenuItem[]
   tables   Table[]
   commands Command[]
+  deletedAt DateTime?
 }
 
 model MenuItem {
@@ -44,6 +47,7 @@ model MenuItem {
   price  Float
   bar    Bar    @relation(fields: [barId], references: [id])
   barId  String
+  deletedAt DateTime?
 
   CommandItem CommandItem[]
 }
@@ -53,6 +57,7 @@ model Table {
   number Int
   bar    Bar    @relation(fields: [barId], references: [id])
   barId  String
+  deletedAt DateTime?
 
   Command Command[]
 }
@@ -65,14 +70,15 @@ model Command {
   barId      String
   openedBy   User           @relation("CommandOpenedBy", fields: [openedById], references: [id])
   openedById String
-  closedBy   User           @relation("CommandClosedBy", fields: [closedById], references: [id])
-  closedById String
+  closedBy   User?           @relation("CommandClosedBy", fields: [closedById], references: [id])
+  closedById String?
   status     CommandStatus
   publicHash String         @unique
   items      CommandItem[]
   total      Float          @default(0)
   createdAt  DateTime       @default(now())
   updatedAt  DateTime       @updatedAt
+  deletedAt  DateTime?
 }
 
 model CommandItem {
@@ -83,6 +89,11 @@ model CommandItem {
   menuItemId    String
   quantity      Int
   notes         String?
+  addedBy       User           @relation("CommandItemAddedBy", fields: [addedById], references: [id])
+  addedById     String
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  deletedAt     DateTime?
 }
 
 enum UserRole {

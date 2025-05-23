@@ -24,7 +24,7 @@ export async function DELETE(
 
   try {
     const item = await prisma.menuItem.findUnique({
-      where: { id },
+      where: { id, deletedAt: null },
       include: { bar: true },
     });
 
@@ -44,7 +44,10 @@ export async function DELETE(
       );
     }
 
-    await prisma.menuItem.delete({ where: { id } });
+    await prisma.menuItem.update({
+      where: { id },
+      data: { deletedAt: new Date() },
+    });
 
     return NextResponse.json(
       { message: "Item deletado com sucesso" },

@@ -43,6 +43,7 @@ export async function POST(req: Request) {
       where: {
         name,
         ownerId: user.id,
+        deletedAt: null,
       },
     });
 
@@ -85,11 +86,11 @@ export async function GET(req: Request) {
 
     if (user.role === "OWNER") {
       bars = await prisma.bar.findMany({
-        where: { ownerId: user.id },
+        where: { ownerId: user.id, deletedAt: null },
       });
     } else if (user.role === "WAITER" && user.ownerId) {
       bars = await prisma.bar.findMany({
-        where: { ownerId: user.ownerId },
+        where: { ownerId: user.ownerId, deletedAt: null },
       });
     } else {
       return NextResponse.json(
@@ -128,7 +129,7 @@ export async function PUT(req: Request) {
   }
 
   try {
-    const bar = await prisma.bar.findUnique({ where: { id } });
+    const bar = await prisma.bar.findUnique({ where: { id, deletedAt: null } });
 
     if (!bar || bar.ownerId !== user.id) {
       return NextResponse.json(
@@ -138,7 +139,7 @@ export async function PUT(req: Request) {
     }
 
     const updatedBar = await prisma.bar.update({
-      where: { id },
+      where: { id, deletedAt: null },
       data: { name },
     });
 
@@ -172,7 +173,7 @@ export async function DELETE(req: Request) {
   }
 
   try {
-    const bar = await prisma.bar.findUnique({ where: { id } });
+    const bar = await prisma.bar.findUnique({ where: { id, deletedAt: null } });
 
     if (!bar || bar.ownerId !== user.id) {
       return NextResponse.json(
@@ -181,7 +182,7 @@ export async function DELETE(req: Request) {
       );
     }
 
-    await prisma.bar.delete({ where: { id } });
+    await prisma.bar.update({ where: { id }, data: { deletedAt: new Date() } });
 
     return NextResponse.json(
       { message: "Bar deletado com sucesso" },

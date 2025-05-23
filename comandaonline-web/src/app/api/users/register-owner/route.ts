@@ -7,7 +7,9 @@ const prisma = new PrismaClient();
 export async function POST(req: Request) {
   const { email, password } = await req.json();
 
-  const existingUser = await prisma.user.findUnique({ where: { email } });
+  const existingUser = await prisma.user.findUnique({
+    where: { email, deletedAt: null },
+  });
   if (existingUser) {
     return NextResponse.json({ message: "Usuário já existe" }, { status: 400 });
   }

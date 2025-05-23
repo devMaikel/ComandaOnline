@@ -1,0 +1,267 @@
+import { getUserFromHeader } from "@/lib/auth";
+import { PrismaClient } from "@prisma/client";
+import { NextResponse } from "next/server";
+
+const prisma = new PrismaClient();
+
+export async function GET(req: Request) {
+  const user = await getUserFromHeader(req);
+
+  if (!user) {
+    return NextResponse.json({ message: "Token inválido" }, { status: 401 });
+  }
+
+  const { searchParams } = new URL(req.url);
+  const barId = searchParams.get("barId");
+
+  if (!barId) {
+    return NextResponse.json(
+      { message: "ID do bar é obrigatório" },
+      { status: 400 }
+    );
+  }
+
+  const bar = await prisma.bar.findUnique({
+    where: { id: barId, deletedAt: null },
+  });
+
+  if (!bar) {
+    return NextResponse.json(
+      { message: "Bar não encontrado" },
+      { status: 404 }
+    );
+  }
+
+  const isOwnerAccess = user.role === "OWNER" && bar.ownerId === user.id;
+  const isWaiterAccess = user.role === "WAITER" && user.ownerId === bar.ownerId;
+
+  if (!isOwnerAccess && !isWaiterAccess) {
+    return NextResponse.json(
+      { message: "Acesso negado às mesas desse bar" },
+      { status: 403 }
+    );
+  }
+
+  const tables = await prisma.table.findMany({
+    where: { barId, deletedAt: null },
+  });
+  return NextResponse.json(tables, { status: 200 });
+}
+
+export async function POST(req: Request) {
+  const user = await getUserFromHeader(req);
+
+  if (!user) {
+    return NextResponse.json({ message: "Token inválido" }, { status: 401 });
+  }
+
+  const { barId, number } = await req.json();
+
+  if (!barId || !number) {
+    return NextResponse.json(
+      { message: "ID do bar e número da mesa são obrigatórios" },
+      { status: 400 }
+    );
+  }
+
+  const bar = await prisma.bar.findUnique({
+    where: { id: barId, deletedAt: null },
+  });
+
+  if (!bar) {
+    return NextResponse.json(
+      { message: "Bar não encontrado" },
+      { status: 404 }
+    );
+  }
+
+  const isOwnerAccess = user.role === "OWNER" && bar.ownerId === user.id;
+  const isWaiterAccess = user.role === "WAITER" && user.ownerId === bar.ownerId;
+
+  if (!isOwnerAccess && !isWaiterAccess) {
+    return NextResponse.json(
+      { message: "Acesso negado para criar mesas nesse bar" },
+      { status: 403 }
+    );
+  }
+
+  const tableNumber = Number(number);
+  if (isNaN(tableNumber)) {
+    return NextResponse.json(
+      { message: "Numero da mesa deve ser um número válido" },
+      { status: 400 }
+    );
+  }
+
+  const table = await prisma.table.findFirst({
+    where: { number: tableNumber, barId, deletedAt: null },
+  });
+
+  if (table) {
+    return NextResponse.json(
+      { message: "Mesa ja existe nesse bar" },
+      { status: 409 }
+    );
+  }
+
+  const created = await prisma.table.create({
+    data: { number: tableNumber, barId },
+  });
+
+  return NextResponse.json(created, { status: 201 });
+}
+
+/**
+ * @swagger
+ * /api/tables:
+ *   get:
+ *     summary: Lista mesas de um bar
+ *     description: Retorna todas as mesas ativas (não deletadas) de um bar específico. Acesso permitido para Owner e Waiter vinculados ao bar.
+ *     tags:
+ *       - Mesas
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: barId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: ID do bar para listar as mesas
+ *     responses:
+ *       200:
+ *         description: Lista de mesas retornada com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Table'
+ *       400:
+ *         description: ID do bar não fornecido
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: ID do bar é obrigatório
+ *       401:
+ *         description: Token JWT inválido ou ausente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Token inválido
+ *       403:
+ *         description: Acesso negado às mesas do bar
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Acesso negado às mesas desse bar
+ *       404:
+ *         description: Bar não encontrado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Bar não encontrado
+ */
+
+/**
+ * @swagger
+ * /api/tables:
+ *   post:
+ *     summary: Cria uma nova mesa
+ *     description: Cria uma nova mesa no bar informado. Acesso permitido para Waiters e Owners do bar. Requer autenticação JWT.
+ *     tags:
+ *       - Mesas
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - barId
+ *               - number
+ *             properties:
+ *               barId:
+ *                 type: string
+ *                 format: uuid
+ *                 example: bar-uuid-1234
+ *               number:
+ *                 type: integer
+ *                 example: 10
+ *     responses:
+ *       201:
+ *         description: Mesa criada com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Table'
+ *       400:
+ *         description: Dados inválidos (faltando barId ou number, ou número da mesa não numérico)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Numero da mesa deve ser um número válido
+ *       401:
+ *         description: Token JWT inválido ou ausente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Token inválido
+ *       403:
+ *         description: Acesso negado para criar mesas
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Acesso negado para criar mesas nesse bar
+ *       404:
+ *         description: Bar não encontrado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Bar não encontrado
+ *       409:
+ *         description: Mesa já existe no bar
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Mesa ja existe nesse bar
+ */

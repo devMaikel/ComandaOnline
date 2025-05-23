@@ -36,7 +36,9 @@ export async function POST(req: Request) {
   }
 
   try {
-    const bar = await prisma.bar.findUnique({ where: { id: barId } });
+    const bar = await prisma.bar.findUnique({
+      where: { id: barId, deletedAt: null },
+    });
 
     if (!bar || bar.ownerId !== user.id) {
       return NextResponse.json(
@@ -48,6 +50,7 @@ export async function POST(req: Request) {
     const existingItem = await prisma.menuItem.findFirst({
       where: {
         barId,
+        deletedAt: null,
         name: {
           equals: name,
           mode: "insensitive",
@@ -110,7 +113,7 @@ export async function GET(req: Request) {
     }
 
     const bar = await prisma.bar.findUnique({
-      where: { id: barId },
+      where: { id: barId, deletedAt: null },
     });
 
     if (!bar) {
@@ -132,7 +135,7 @@ export async function GET(req: Request) {
     }
 
     const items = await prisma.menuItem.findMany({
-      where: { barId },
+      where: { barId, deletedAt: null },
     });
 
     return NextResponse.json(items, { status: 200 });
@@ -166,7 +169,7 @@ export async function PATCH(req: Request) {
     }
 
     const item = await prisma.menuItem.findUnique({
-      where: { id },
+      where: { id, deletedAt: null },
       include: { bar: true },
     });
 
@@ -191,6 +194,7 @@ export async function PATCH(req: Request) {
         where: {
           barId: item.barId,
           name,
+          deletedAt: null,
           NOT: { id }, // evita colisão com ele mesmo
         },
       });
@@ -212,7 +216,7 @@ export async function PATCH(req: Request) {
     }
 
     const updated = await prisma.menuItem.update({
-      where: { id },
+      where: { id, deletedAt: null },
       data: {
         ...(name && { name }),
         ...(priceNumber !== undefined && { price: priceNumber }),

@@ -9,7 +9,9 @@ export async function POST(req: Request) {
   try {
     const { email, password } = await req.json();
 
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await prisma.user.findUnique({
+      where: { email, deletedAt: null },
+    });
     if (!user) {
       return NextResponse.json(
         { message: "Credenciais inválidas" },
