@@ -11,3 +11,11 @@
 //     </div>
 //   );
 // }
+
+export default async function IndexPage() {
+  return (
+    <div className="prose max-w-none bg-white text-black p-4 w-full h-full">
+      <h1>API Documentation</h1>
+    </div>
+  );
+}
