@@ -10,20 +10,27 @@ export interface Bar {
 }
 
 export async function getMyBar(token: string): Promise<Bar | null> {
-  const res = await fetch(`${API_URL}/bars`, {
-    method: "GET",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+  try {
+    const res = await fetch(`${API_URL}/bars`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+      },
+    });
 
-  if (!res.ok) {
-    console.error("Erro ao buscar bar:", await res.json());
+    const text = await res.text();
+    try {
+      const bars: Bar[] = JSON.parse(text);
+      return bars.length > 0 ? bars[0] : null;
+    } catch {
+      console.error("Resposta não é JSON válido:", text);
+      return null;
+    }
+  } catch (error) {
+    console.error("Erro na requisição getMyBar:", error);
     return null;
   }
-
-  const bars: Bar[] = await res.json();
-  return bars.length > 0 ? bars[0] : null;
 }
 
 export async function createBar(

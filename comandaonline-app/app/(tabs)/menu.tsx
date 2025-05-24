@@ -81,6 +81,8 @@ export default function MenuScreen() {
       setMenuItems([...menuItems, newItem]);
       setNewItemName("");
       setNewItemPrice("");
+      // loadMenuItems(selectedBar.id);
+      setAddingItem(false);
       Alert.alert("Item adicionado com sucesso");
     } catch (error) {
       console.error("Erro ao criar item:", error);
