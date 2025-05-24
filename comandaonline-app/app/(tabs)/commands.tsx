@@ -1,0 +1,638 @@
+import { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  Alert,
+  TextInput,
+  ScrollView,
+  Modal,
+  Pressable,
+} from "react-native";
+import {
+  Command,
+  getOpenCommands,
+  closeCommand,
+  createCommand,
+} from "@/services/commands";
+import {
+  CommandItem,
+  addCommandItem,
+  updateCommandItem,
+  deleteCommandItem,
+  getCommandItems,
+} from "@/services/commandItems";
+import { getMenuItems, MenuItem } from "@/services/menuItems";
+import { Bar, getMyBar } from "@/services/bar";
+import { getTables, Table } from "@/services/tables";
+import { useGeneralContext } from "@/context/GeneralContext";
+
+export default function CommandsScreen() {
+  const [commands, setCommands] = useState<Command[]>([]);
+  const [selectedCommand, setSelectedCommand] = useState<Command | null>(null);
+  const [commandItems, setCommandItems] = useState<CommandItem[]>([]);
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [bar, setBar] = useState<Bar | null>(null);
+  const [tables, setTables] = useState<Table[]>([]);
+  const [newItem, setNewItem] = useState({
+    menuItemId: "",
+    quantity: "1",
+    notes: "",
+  });
+  const [editingItem, setEditingItem] = useState<CommandItem | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedTable, setSelectedTable] = useState<Table | null>(null);
+  const { userToken, showLoading, hideLoading } = useGeneralContext();
+
+  useEffect(() => {
+    loadBarAndCommands();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (selectedCommand) {
+      loadCommandDetails(selectedCommand.id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCommand]);
+
+  useEffect(() => {
+    if (bar?.id) {
+      loadTables(bar.id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bar]);
+
+  const loadBarAndCommands = async () => {
+    try {
+      showLoading();
+      if (userToken) {
+        const barData = await getMyBar(userToken);
+        if (barData) {
+          setBar(barData);
+          const commandsData = await getOpenCommands(barData.id);
+          setCommands(commandsData);
+        }
+      }
+    } catch (error) {
+      console.error("Erro ao carregar bar e comandas:", error);
+      Alert.alert("Erro", "Não foi possível carregar as comandas");
+    } finally {
+      hideLoading();
+    }
+  };
+
+  const loadTables = async (barId: string) => {
+    try {
+      showLoading();
+      const tablesData = await getTables(barId);
+      setTables(tablesData);
+    } catch (error) {
+      console.error("Erro ao carregar mesas:", error);
+      Alert.alert("Erro", "Não foi possível carregar as mesas");
+    } finally {
+      hideLoading();
+    }
+  };
+
+  const loadCommandDetails = async (commandId: string) => {
+    try {
+      showLoading();
+      const items = await getCommandItems(commandId);
+      console.log("items: ", items);
+      setCommandItems(items);
+
+      if (bar) {
+        const menuItemsData = await getMenuItems(bar.id);
+        setMenuItems(menuItemsData);
+      }
+    } catch (error) {
+      console.error("Erro ao carregar itens da comanda:", error);
+      Alert.alert("Erro", "Não foi possível carregar os itens da comanda");
+    } finally {
+      hideLoading();
+    }
+  };
+
+  const handleAddItemToCommand = async () => {
+    if (!selectedCommand || !newItem.menuItemId || !newItem.quantity) return;
+
+    try {
+      showLoading();
+      const addedItem = await addCommandItem(
+        selectedCommand.id,
+        newItem.menuItemId,
+        parseInt(newItem.quantity),
+        newItem.notes
+      );
+
+      setCommandItems([...commandItems, addedItem]);
+      setNewItem({ menuItemId: "", quantity: "1", notes: "" });
+      Alert.alert("Sucesso", "Item adicionado à comanda");
+    } catch (error) {
+      console.error("Erro ao adicionar item:", error);
+      Alert.alert("Erro", "Não foi possível adicionar o item à comanda");
+    } finally {
+      hideLoading();
+    }
+  };
+
+  const handleUpdateCommandItem = async () => {
+    if (!editingItem || !newItem.quantity) return;
+
+    try {
+      showLoading();
+      const updatedItem = await updateCommandItem(editingItem.id, {
+        quantity: parseInt(newItem.quantity),
+        notes: newItem.notes,
+      });
+
+      setCommandItems(
+        commandItems.map((item) =>
+          item.id === updatedItem.id ? updatedItem : item
+        )
+      );
+
+      setEditingItem(null);
+      setNewItem({ menuItemId: "", quantity: "1", notes: "" });
+      Alert.alert("Sucesso", "Item atualizado com sucesso");
+    } catch (error) {
+      console.error("Erro ao atualizar item:", error);
+      Alert.alert("Erro", "Não foi possível atualizar o item");
+    } finally {
+      hideLoading();
+    }
+  };
+
+  const handleDeleteCommandItem = async (itemId: string) => {
+    Alert.alert(
+      "Confirmar exclusão",
+      "Tem certeza que deseja remover este item da comanda?",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Remover",
+          onPress: async () => {
+            try {
+              showLoading();
+              if (selectedCommand) {
+                await deleteCommandItem(itemId, selectedCommand.id);
+                setCommandItems(
+                  commandItems.filter((item) => item.id !== itemId)
+                );
+                Alert.alert("Sucesso", "Item removido da comanda");
+              }
+            } catch (error) {
+              console.error("Erro ao remover item:", error);
+              Alert.alert("Erro", "Não foi possível remover o item");
+            } finally {
+              hideLoading();
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleCloseCommand = async (commandId: string) => {
+    Alert.alert(
+      "Fechar comanda",
+      "Tem certeza que deseja fechar esta comanda?",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Fechar",
+          onPress: async () => {
+            try {
+              showLoading();
+              await closeCommand(commandId);
+              setCommands(commands.filter((cmd) => cmd.id !== commandId));
+              setSelectedCommand(null);
+              Alert.alert("Sucesso", "Comanda fechada com sucesso");
+            } catch (error) {
+              console.error("Erro ao fechar comanda:", error);
+              Alert.alert("Erro", "Não foi possível fechar a comanda");
+            } finally {
+              hideLoading();
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleCreateCommand = async () => {
+    if (!selectedTable || !bar) return;
+
+    try {
+      showLoading();
+      const newCmd = await createCommand(selectedTable.id);
+      setCommands([...commands, newCmd]);
+      setSelectedTable(null);
+      setModalVisible(false);
+      Alert.alert("Sucesso", "Comanda criada com sucesso");
+    } catch (error) {
+      console.error("Erro ao criar comanda:", error);
+      Alert.alert("Erro", "Não foi possível criar a comanda");
+    } finally {
+      hideLoading();
+    }
+  };
+
+  const startEditing = (item: CommandItem) => {
+    setEditingItem(item);
+    setNewItem({
+      menuItemId: item.menuItemId,
+      quantity: item.quantity.toString(),
+      notes: item.notes || "",
+    });
+  };
+
+  const cancelEditing = () => {
+    setEditingItem(null);
+    setNewItem({ menuItemId: "", quantity: "1", notes: "" });
+  };
+
+  return (
+    <View style={{ flex: 1, padding: 16, backgroundColor: "#f5f5f5" }}>
+      {!selectedCommand ? (
+        <>
+          <Text
+            style={{
+              fontSize: 18,
+              fontWeight: "bold",
+              marginBottom: 15,
+              color: "#333",
+            }}
+          >
+            Comandas Abertas - {bar?.name}
+          </Text>
+
+          <TouchableOpacity
+            onPress={() => setModalVisible(true)}
+            style={{
+              backgroundColor: "#007bff",
+              padding: 15,
+              borderRadius: 8,
+              marginBottom: 20,
+              alignItems: "center",
+            }}
+          >
+            <Text style={{ color: "white", fontWeight: "bold" }}>
+              Nova Comanda
+            </Text>
+          </TouchableOpacity>
+
+          <Modal
+            animationType="slide"
+            transparent={true}
+            visible={modalVisible}
+            onRequestClose={() => setModalVisible(false)}
+          >
+            <View
+              style={{
+                flex: 1,
+                justifyContent: "center",
+                alignItems: "center",
+                backgroundColor: "rgba(0,0,0,0.5)",
+              }}
+            >
+              <View
+                style={{
+                  width: "80%",
+                  backgroundColor: "white",
+                  borderRadius: 10,
+                  padding: 20,
+                  maxHeight: "70%",
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 18,
+                    fontWeight: "bold",
+                    marginBottom: 15,
+                    textAlign: "center",
+                  }}
+                >
+                  Selecione a Mesa
+                </Text>
+
+                <ScrollView style={{ marginBottom: 15 }}>
+                  {tables.map((table) => (
+                    <Pressable
+                      key={table.id}
+                      style={({ pressed }) => ({
+                        padding: 15,
+                        borderBottomWidth: 1,
+                        borderBottomColor: "#eee",
+                        backgroundColor:
+                          selectedTable?.id === table.id
+                            ? "#e0e0e0"
+                            : pressed
+                            ? "#f0f0f0"
+                            : "transparent",
+                      })}
+                      onPress={() => setSelectedTable(table)}
+                    >
+                      <Text style={{ fontSize: 16 }}>Mesa {table.number}</Text>
+                    </Pressable>
+                  ))}
+                </ScrollView>
+
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <Pressable
+                    style={{
+                      borderRadius: 5,
+                      padding: 10,
+                      width: "48%",
+                      alignItems: "center",
+                      backgroundColor: "#6c757d",
+                    }}
+                    onPress={() => {
+                      setSelectedTable(null);
+                      setModalVisible(false);
+                    }}
+                  >
+                    <Text style={{ color: "white", fontWeight: "bold" }}>
+                      Cancelar
+                    </Text>
+                  </Pressable>
+                  <Pressable
+                    style={{
+                      borderRadius: 5,
+                      padding: 10,
+                      width: "48%",
+                      alignItems: "center",
+                      backgroundColor: !selectedTable ? "#cccccc" : "#007bff",
+                      opacity: !selectedTable ? 0.5 : 1,
+                    }}
+                    onPress={handleCreateCommand}
+                    disabled={!selectedTable}
+                  >
+                    <Text style={{ color: "white", fontWeight: "bold" }}>
+                      Confirmar
+                    </Text>
+                  </Pressable>
+                </View>
+              </View>
+            </View>
+          </Modal>
+
+          <FlatList
+            data={commands}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={{
+                  backgroundColor: "white",
+                  padding: 15,
+                  marginBottom: 10,
+                  borderRadius: 8,
+                  elevation: 2,
+                }}
+                onPress={() => setSelectedCommand(item)}
+              >
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <View>
+                    <Text style={{ fontSize: 16, fontWeight: "600" }}>
+                      Mesa: {item.table?.number || item.tableId}
+                    </Text>
+                    <Text style={{ color: "#28a745", marginTop: 5 }}>
+                      Total: R$ {item.total.toFixed(2)}
+                    </Text>
+                  </View>
+                  <TouchableOpacity
+                    onPress={() => handleCloseCommand(item.id)}
+                    style={{
+                      backgroundColor: "#dc3545",
+                      padding: 8,
+                      borderRadius: 5,
+                    }}
+                  >
+                    <Text style={{ color: "white" }}>Fechar</Text>
+                  </TouchableOpacity>
+                </View>
+              </TouchableOpacity>
+            )}
+          />
+        </>
+      ) : (
+        <>
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              marginBottom: 15,
+            }}
+          >
+            <TouchableOpacity
+              onPress={() => setSelectedCommand(null)}
+              style={{ marginRight: 10 }}
+            >
+              <Text style={{ color: "#007bff", fontSize: 16 }}>← Voltar</Text>
+            </TouchableOpacity>
+            <Text style={{ fontSize: 18, fontWeight: "bold", color: "#333" }}>
+              Comanda - Mesa:{" "}
+              {selectedCommand.table?.number || selectedCommand.tableId}
+            </Text>
+          </View>
+
+          <View
+            style={{
+              marginBottom: 20,
+              backgroundColor: "white",
+              padding: 15,
+              borderRadius: 8,
+              elevation: 2,
+            }}
+          >
+            <Text
+              style={{ fontSize: 16, fontWeight: "bold", marginBottom: 10 }}
+            >
+              {editingItem ? "Editar Item" : "Adicionar Item"}
+            </Text>
+
+            <Text style={{ marginBottom: 5 }}>Item do Menu:</Text>
+            <ScrollView style={{ maxHeight: 150, marginBottom: 10 }}>
+              {menuItems.map((item) => (
+                <TouchableOpacity
+                  key={item.id}
+                  onPress={() =>
+                    setNewItem({ ...newItem, menuItemId: item.id })
+                  }
+                  style={{
+                    padding: 8,
+                    backgroundColor:
+                      newItem.menuItemId === item.id
+                        ? "#e0e0e0"
+                        : "transparent",
+                    borderRadius: 4,
+                    marginBottom: 2,
+                  }}
+                >
+                  <Text>
+                    {item.name} - R$ {item.price.toFixed(2)}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+
+            <Text style={{ marginBottom: 5 }}>Quantidade:</Text>
+            <TextInput
+              value={newItem.quantity}
+              onChangeText={(text) =>
+                setNewItem({ ...newItem, quantity: text })
+              }
+              keyboardType="numeric"
+              style={{
+                borderWidth: 1,
+                borderColor: "#ddd",
+                padding: 10,
+                marginBottom: 10,
+                borderRadius: 5,
+              }}
+            />
+
+            <Text style={{ marginBottom: 5 }}>Observações:</Text>
+            <TextInput
+              value={newItem.notes}
+              onChangeText={(text) => setNewItem({ ...newItem, notes: text })}
+              style={{
+                borderWidth: 1,
+                borderColor: "#ddd",
+                padding: 10,
+                marginBottom: 15,
+                borderRadius: 5,
+              }}
+            />
+
+            <View
+              style={{ flexDirection: "row", justifyContent: "space-between" }}
+            >
+              {editingItem ? (
+                <>
+                  <TouchableOpacity
+                    onPress={cancelEditing}
+                    style={{
+                      backgroundColor: "#6c757d",
+                      padding: 10,
+                      borderRadius: 5,
+                      width: "48%",
+                      alignItems: "center",
+                    }}
+                  >
+                    <Text style={{ color: "white" }}>Cancelar</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={handleUpdateCommandItem}
+                    style={{
+                      backgroundColor: "#28a745",
+                      padding: 10,
+                      borderRadius: 5,
+                      width: "48%",
+                      alignItems: "center",
+                    }}
+                  >
+                    <Text style={{ color: "white" }}>Salvar</Text>
+                  </TouchableOpacity>
+                </>
+              ) : (
+                <TouchableOpacity
+                  onPress={handleAddItemToCommand}
+                  style={{
+                    backgroundColor: "#007bff",
+                    padding: 10,
+                    borderRadius: 5,
+                    width: "100%",
+                    alignItems: "center",
+                  }}
+                >
+                  <Text style={{ color: "white" }}>Adicionar Item</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+
+          <Text style={{ fontSize: 16, fontWeight: "bold", marginBottom: 10 }}>
+            Itens da Comanda:
+          </Text>
+          {commandItems.length > 0 ? (
+            <FlatList
+              data={commandItems}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => (
+                <View
+                  style={{
+                    backgroundColor: "white",
+                    padding: 15,
+                    marginBottom: 10,
+                    borderRadius: 8,
+                    elevation: 2,
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontWeight: "600" }}>
+                      {item.menuItem?.name || "Item não encontrado"}
+                    </Text>
+                    <Text style={{ color: "#6c757d" }}>
+                      Quantidade: {item.quantity}
+                    </Text>
+                    {item.notes && (
+                      <Text style={{ color: "#6c757d" }}>
+                        Obs: {item.notes}
+                      </Text>
+                    )}
+                    <Text style={{ color: "#28a745", marginTop: 5 }}>
+                      R$ {(item.menuItem?.price || 0) * item.quantity}
+                    </Text>
+                  </View>
+                  <View style={{ flexDirection: "row" }}>
+                    <TouchableOpacity
+                      onPress={() => startEditing(item)}
+                      style={{
+                        backgroundColor: "#ffc107",
+                        padding: 8,
+                        borderRadius: 5,
+                        marginRight: 10,
+                      }}
+                    >
+                      <Text style={{ color: "white" }}>Editar</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => handleDeleteCommandItem(item.id)}
+                      style={{
+                        backgroundColor: "#dc3545",
+                        padding: 8,
+                        borderRadius: 5,
+                      }}
+                    >
+                      <Text style={{ color: "white" }}>Remover</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )}
+            />
+          ) : (
+            <Text style={{ color: "#6c757d", textAlign: "center" }}>
+              Nenhum item nesta comanda
+            </Text>
+          )}
+        </>
+      )}
+    </View>
+  );
+}

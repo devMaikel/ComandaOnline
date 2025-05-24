@@ -183,6 +183,38 @@ export async function DELETE(req: NextRequest) {
   }
 }
 
+export async function GET(req: NextRequest) {
+  try {
+    const user = await getUserFromHeader(req);
+    if (!user) {
+      return NextResponse.json({ message: "Token inválido" }, { status: 401 });
+    }
+
+    const commandId = req.nextUrl.searchParams.get("commandId");
+    if (!commandId) {
+      return NextResponse.json(
+        { message: "Parâmetro commandId é obrigatório" },
+        { status: 400 }
+      );
+    }
+
+    const commandItems = await prisma.commandItem.findMany({
+      where: { commandId, deletedAt: null },
+      include: { menuItem: true },
+    });
+
+    return NextResponse.json(commandItems);
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      return NextResponse.json(
+        { message: "Erro ao buscar itens da comanda", error: error.message },
+        { status: 500 }
+      );
+    }
+    return NextResponse.json({ message: "Erro desconhecido" }, { status: 500 });
+  }
+}
+
 export async function PATCH(req: NextRequest) {
   try {
     const user = await getUserFromHeader(req);

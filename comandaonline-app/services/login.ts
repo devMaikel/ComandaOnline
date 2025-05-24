@@ -1,10 +1,20 @@
+import { API_URL } from "@/constants/GeneralConstants";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
-const API_URL = "https://comanda-online-theta.vercel.app/api";
 
 type LoginPayload = {
   email: string;
   password: string;
+  token?: string;
+};
+
+type User = {
+  id: string;
+  email: string;
+  role: string;
+};
+
+type CheckTokenResponse = {
+  user: User;
 };
 
 type LoginResponse = {
@@ -31,6 +41,45 @@ export async function loginUser(payload: LoginPayload): Promise<LoginResponse> {
   if (!response.ok) {
     const error = await response.json();
     throw new Error(error.message || "Erro ao fazer login");
+  }
+
+  const data = await response.json();
+  return data;
+}
+
+export async function checkToken(
+  payload: LoginResponse
+): Promise<CheckTokenResponse> {
+  try {
+    const response = await fetch(`${API_URL}/users/check-token`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+    const data = await response.json();
+    return data;
+  } catch {
+    throw new Error("Erro ao verificar token");
+  }
+}
+
+export async function registerWaiter(
+  payload: LoginPayload
+): Promise<RegisterResponse> {
+  const response = await fetch(`${API_URL}/users/register-waiter`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${payload.token}`,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || "Erro ao registrar usuário");
   }
 
   const data = await response.json();
