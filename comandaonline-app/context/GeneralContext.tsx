@@ -10,6 +10,8 @@ const GeneralContext = createContext({
   setUserEmail: (_token: string) => {},
   userRole: "",
   setUserRole: (_token: string) => {},
+  refresh: () => {},
+  refreshNumber: 0,
 });
 
 export function GeneralProvider({ children }: { children: ReactNode }) {
@@ -17,9 +19,11 @@ export function GeneralProvider({ children }: { children: ReactNode }) {
   const [userToken, setUserToken] = useState<string>("");
   const [userEmail, setUserEmail] = useState<string>("");
   const [userRole, setUserRole] = useState<string>("");
+  const [refreshNumber, setRefreshNumber] = useState<number>(0);
 
   const showLoading = () => setIsLoading(true);
   const hideLoading = () => setIsLoading(false);
+  const refresh = () => setRefreshNumber(refreshNumber + 1);
 
   return (
     <GeneralContext.Provider
@@ -32,6 +36,8 @@ export function GeneralProvider({ children }: { children: ReactNode }) {
         setUserEmail,
         userRole,
         setUserRole,
+        refresh,
+        refreshNumber,
       }}
     >
       {children}

@@ -158,13 +158,77 @@ export default function MenuScreen() {
 
   return (
     <View style={{ flex: 1, padding: 16, backgroundColor: "#f5f5f5" }}>
-      <View style={{ marginBottom: 20 }}>
+      <View
+        style={{
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 8,
+          paddingVertical: 12,
+          paddingHorizontal: 16,
+          backgroundColor: "#6f42c1",
+          borderRadius: 10,
+          elevation: 3,
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.2,
+          shadowRadius: 4,
+          marginTop: 16,
+        }}
+      >
+        <View>
+          <Text
+            style={{
+              fontSize: 14,
+              color: "rgba(255,255,255,0.8)",
+              marginBottom: 2,
+            }}
+          >
+            Cardápio do Bar
+          </Text>
+          <Text
+            style={{
+              fontSize: 20,
+              fontWeight: "700",
+              color: "white",
+            }}
+          >
+            {selectedBar?.name || "Selecione um bar"}
+          </Text>
+        </View>
+
+        <View style={{ alignItems: "center" }}>
+          <View
+            style={{
+              backgroundColor: "rgba(255,255,255,0.2)",
+              borderRadius: 20,
+              padding: 5,
+              minWidth: 40,
+              alignItems: "center",
+            }}
+          >
+            <Text style={{ fontSize: 16, fontWeight: "bold", color: "white" }}>
+              {menuItems.length}
+            </Text>
+          </View>
+          <Text
+            style={{
+              fontSize: 12,
+              color: "rgba(255,255,255,0.8)",
+              marginTop: 4,
+            }}
+          >
+            Itens
+          </Text>
+        </View>
+      </View>
+
+      <View style={{ marginBottom: 8 }}>
         <Text
           style={{
-            fontSize: 18,
-            fontWeight: "bold",
-            marginBottom: 10,
+            fontSize: 14,
             color: "#333",
+            marginBottom: 4,
           }}
         >
           Selecione o Bar:
@@ -177,11 +241,12 @@ export default function MenuScreen() {
             renderItem={({ item }) => (
               <TouchableOpacity
                 style={{
-                  padding: 10,
+                  paddingVertical: 8,
+                  paddingHorizontal: 16,
                   marginRight: 10,
                   backgroundColor:
-                    selectedBar?.id === item.id ? "#007bff" : "#e0e0e0",
-                  borderRadius: 5,
+                    selectedBar?.id === item.id ? "#5a3d9e" : "#e0e0e0",
+                  borderRadius: 20,
                 }}
                 onPress={() => setSelectedBar(item)}
               >
@@ -296,7 +361,7 @@ export default function MenuScreen() {
               <TouchableOpacity
                 onPress={handleAddItem}
                 style={{
-                  backgroundColor: "#007bff",
+                  backgroundColor: "#28a745",
                   padding: 10,
                   borderRadius: 5,
                   width: "48%",
@@ -310,7 +375,7 @@ export default function MenuScreen() {
             <TouchableOpacity
               onPress={() => setAddingItem(true)}
               style={{
-                backgroundColor: "#007bff",
+                backgroundColor: "#28a745",
                 padding: 10,
                 borderRadius: 5,
                 width: "100%",

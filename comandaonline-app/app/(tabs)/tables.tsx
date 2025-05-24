@@ -101,21 +101,75 @@ export default function TablesScreen() {
 
   return (
     <View style={{ flex: 1, padding: 16, backgroundColor: "#f5f5f5" }}>
-      <Text
+      <View
         style={{
-          fontSize: 18,
-          fontWeight: "bold",
-          marginBottom: 15,
-          color: "#333",
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 20,
+          paddingVertical: 12,
+          paddingHorizontal: 16,
+          backgroundColor: "#c8b080",
+          borderRadius: 10,
+          elevation: 3,
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.2,
+          shadowRadius: 4,
+          marginTop: 16,
         }}
       >
-        Mesas - {bar?.name || "Carregando..."}
-      </Text>
+        <View>
+          <Text
+            style={{
+              fontSize: 14,
+              color: "rgba(255,255,255,0.8)",
+              marginBottom: 2,
+            }}
+          >
+            Gerenciamento de mesas
+          </Text>
+          <Text
+            style={{
+              fontSize: 20,
+              fontWeight: "700",
+              color: "white",
+            }}
+          >
+            {bar?.name || "Carregando..."}
+          </Text>
+        </View>
+
+        <View style={{ alignItems: "center" }}>
+          <View
+            style={{
+              backgroundColor: "rgba(255,255,255,0.2)",
+              borderRadius: 20,
+              padding: 5,
+              minWidth: 40,
+              alignItems: "center",
+            }}
+          >
+            <Text style={{ fontSize: 16, fontWeight: "bold", color: "white" }}>
+              {tables.length}
+            </Text>
+          </View>
+          <Text
+            style={{
+              fontSize: 12,
+              color: "rgba(255,255,255,0.8)",
+              marginTop: 4,
+            }}
+          >
+            Mesas
+          </Text>
+        </View>
+      </View>
 
       <TouchableOpacity
         onPress={() => setModalVisible(true)}
         style={{
-          backgroundColor: "#007bff",
+          backgroundColor: "#28a745",
           padding: 15,
           borderRadius: 8,
           marginBottom: 20,

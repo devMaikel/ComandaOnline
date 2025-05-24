@@ -262,6 +262,21 @@ export async function PATCH(req: NextRequest) {
       },
     });
 
+    const commandItems = await prisma.commandItem.findMany({
+      where: { commandId: item.commandId, deletedAt: null },
+      include: { menuItem: true },
+    });
+
+    const newTotal = commandItems.reduce(
+      (sum, item) => sum + item.menuItem.price * item.quantity,
+      0
+    );
+
+    await prisma.command.update({
+      where: { id: item.commandId },
+      data: { total: newTotal },
+    });
+
     return NextResponse.json(updated);
   } catch (error: unknown) {
     if (error instanceof Error) {

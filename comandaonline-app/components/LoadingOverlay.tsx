@@ -13,6 +13,7 @@ export default function LoadingOverlay() {
         justifyContent: "center",
         alignItems: "center",
         zIndex: 999,
+        elevation: 999,
       }}
     >
       <ActivityIndicator size="large" color="#007AFF" />

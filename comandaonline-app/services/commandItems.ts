@@ -87,7 +87,6 @@ export async function deleteCommandItem(
 export async function getCommandItems(
   commandId: string
 ): Promise<CommandItem[]> {
-  console.log("commandId: ", commandId);
   const token = await getToken();
   const response = await fetch(
     `${API_URL}/command-items?commandId=${commandId}`,
@@ -105,7 +104,5 @@ export async function getCommandItems(
   }
 
   const data = await response.json();
-  console.log("data: ", data);
-
-  return await response.json();
+  return data;
 }

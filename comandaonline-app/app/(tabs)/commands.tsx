@@ -43,19 +43,20 @@ export default function CommandsScreen() {
   const [editingItem, setEditingItem] = useState<CommandItem | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedTable, setSelectedTable] = useState<Table | null>(null);
-  const { userToken, showLoading, hideLoading } = useGeneralContext();
+  const { userToken, showLoading, hideLoading, refresh, refreshNumber } =
+    useGeneralContext();
 
   useEffect(() => {
     loadBarAndCommands();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [refreshNumber]);
 
   useEffect(() => {
     if (selectedCommand) {
       loadCommandDetails(selectedCommand.id);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedCommand]);
+  }, [selectedCommand, refreshNumber]);
 
   useEffect(() => {
     if (bar?.id) {
@@ -97,6 +98,7 @@ export default function CommandsScreen() {
   };
 
   const loadCommandDetails = async (commandId: string) => {
+    console.log("entrou no loadCommandDetails");
     try {
       showLoading();
       const items = await getCommandItems(commandId);
@@ -126,8 +128,9 @@ export default function CommandsScreen() {
         parseInt(newItem.quantity),
         newItem.notes
       );
-
-      setCommandItems([...commandItems, addedItem]);
+      console.log("addedItem: ", addedItem);
+      // loadCommandDetails(selectedCommand.id);
+      refresh();
       setNewItem({ menuItemId: "", quantity: "1", notes: "" });
       Alert.alert("Sucesso", "Item adicionado à comanda");
     } catch (error) {
@@ -139,7 +142,7 @@ export default function CommandsScreen() {
   };
 
   const handleUpdateCommandItem = async () => {
-    if (!editingItem || !newItem.quantity) return;
+    if (!editingItem || !newItem.quantity || !selectedCommand) return;
 
     try {
       showLoading();
@@ -147,12 +150,9 @@ export default function CommandsScreen() {
         quantity: parseInt(newItem.quantity),
         notes: newItem.notes,
       });
+      console.log("updatedItem: ", updatedItem);
 
-      setCommandItems(
-        commandItems.map((item) =>
-          item.id === updatedItem.id ? updatedItem : item
-        )
-      );
+      refresh();
 
       setEditingItem(null);
       setNewItem({ menuItemId: "", quantity: "1", notes: "" });
@@ -178,9 +178,7 @@ export default function CommandsScreen() {
               showLoading();
               if (selectedCommand) {
                 await deleteCommandItem(itemId, selectedCommand.id);
-                setCommandItems(
-                  commandItems.filter((item) => item.id !== itemId)
-                );
+                refresh();
                 Alert.alert("Sucesso", "Item removido da comanda");
               }
             } catch (error) {
@@ -209,6 +207,7 @@ export default function CommandsScreen() {
               await closeCommand(commandId);
               setCommands(commands.filter((cmd) => cmd.id !== commandId));
               setSelectedCommand(null);
+              refresh();
               Alert.alert("Sucesso", "Comanda fechada com sucesso");
             } catch (error) {
               console.error("Erro ao fechar comanda:", error);
@@ -224,17 +223,21 @@ export default function CommandsScreen() {
 
   const handleCreateCommand = async () => {
     if (!selectedTable || !bar) return;
+    setModalVisible(false);
 
     try {
       showLoading();
       const newCmd = await createCommand(selectedTable.id);
-      setCommands([...commands, newCmd]);
+      console.log("commands: ", commands);
+      console.log("newCmd: ", newCmd);
+      loadBarAndCommands();
       setSelectedTable(null);
       setModalVisible(false);
+      refresh();
       Alert.alert("Sucesso", "Comanda criada com sucesso");
     } catch (error) {
       console.error("Erro ao criar comanda:", error);
-      Alert.alert("Erro", "Não foi possível criar a comanda");
+      Alert.alert("Erro", `${error}`);
     } finally {
       hideLoading();
     }
@@ -258,21 +261,77 @@ export default function CommandsScreen() {
     <View style={{ flex: 1, padding: 16, backgroundColor: "#f5f5f5" }}>
       {!selectedCommand ? (
         <>
-          <Text
+          <View
             style={{
-              fontSize: 18,
-              fontWeight: "bold",
-              marginBottom: 15,
-              color: "#333",
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: 20,
+              paddingVertical: 12,
+              paddingHorizontal: 16,
+              backgroundColor: "#fa4069",
+              borderRadius: 10,
+              elevation: 3,
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.2,
+              shadowRadius: 4,
+              marginTop: 16,
             }}
           >
-            Comandas Abertas - {bar?.name}
-          </Text>
+            <View>
+              <Text
+                style={{
+                  fontSize: 14,
+                  color: "rgba(255,255,255,0.8)",
+                  marginBottom: 2,
+                }}
+              >
+                Gerenciamento de comandas
+              </Text>
+              <Text
+                style={{
+                  fontSize: 20,
+                  fontWeight: "700",
+                  color: "white",
+                }}
+              >
+                {bar?.name || "Carregando..."}
+              </Text>
+            </View>
+
+            <View style={{ alignItems: "center" }}>
+              <View
+                style={{
+                  backgroundColor: "rgba(255,255,255,0.2)",
+                  borderRadius: 20,
+                  padding: 5,
+                  minWidth: 40,
+                  alignItems: "center",
+                }}
+              >
+                <Text
+                  style={{ fontSize: 16, fontWeight: "bold", color: "white" }}
+                >
+                  {commands.length}
+                </Text>
+              </View>
+              <Text
+                style={{
+                  fontSize: 12,
+                  color: "rgba(255,255,255,0.8)",
+                  marginTop: 4,
+                }}
+              >
+                Comandas
+              </Text>
+            </View>
+          </View>
 
           <TouchableOpacity
             onPress={() => setModalVisible(true)}
             style={{
-              backgroundColor: "#007bff",
+              backgroundColor: "#28a745",
               padding: 15,
               borderRadius: 8,
               marginBottom: 20,
@@ -346,7 +405,7 @@ export default function CommandsScreen() {
                     justifyContent: "space-between",
                   }}
                 >
-                  <Pressable
+                  <TouchableOpacity
                     style={{
                       borderRadius: 5,
                       padding: 10,
@@ -362,14 +421,14 @@ export default function CommandsScreen() {
                     <Text style={{ color: "white", fontWeight: "bold" }}>
                       Cancelar
                     </Text>
-                  </Pressable>
-                  <Pressable
+                  </TouchableOpacity>
+                  <TouchableOpacity
                     style={{
                       borderRadius: 5,
                       padding: 10,
                       width: "48%",
                       alignItems: "center",
-                      backgroundColor: !selectedTable ? "#cccccc" : "#007bff",
+                      backgroundColor: !selectedTable ? "#cccccc" : "#28a745",
                       opacity: !selectedTable ? 0.5 : 1,
                     }}
                     onPress={handleCreateCommand}
@@ -378,7 +437,7 @@ export default function CommandsScreen() {
                     <Text style={{ color: "white", fontWeight: "bold" }}>
                       Confirmar
                     </Text>
-                  </Pressable>
+                  </TouchableOpacity>
                 </View>
               </View>
             </View>
@@ -420,7 +479,7 @@ export default function CommandsScreen() {
                       borderRadius: 5,
                     }}
                   >
-                    <Text style={{ color: "white" }}>Fechar</Text>
+                    <Text style={{ color: "white" }}>Fechar conta</Text>
                   </TouchableOpacity>
                 </View>
               </TouchableOpacity>
@@ -440,7 +499,7 @@ export default function CommandsScreen() {
               onPress={() => setSelectedCommand(null)}
               style={{ marginRight: 10 }}
             >
-              <Text style={{ color: "#007bff", fontSize: 16 }}>← Voltar</Text>
+              <Text style={{ color: "#28a745", fontSize: 16 }}>← Voltar</Text>
             </TouchableOpacity>
             <Text style={{ fontSize: 18, fontWeight: "bold", color: "#333" }}>
               Comanda - Mesa:{" "}
@@ -551,7 +610,7 @@ export default function CommandsScreen() {
                 <TouchableOpacity
                   onPress={handleAddItemToCommand}
                   style={{
-                    backgroundColor: "#007bff",
+                    backgroundColor: "#28a745",
                     padding: 10,
                     borderRadius: 5,
                     width: "100%",
