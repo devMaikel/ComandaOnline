@@ -18,6 +18,10 @@ model User {
   id                String     @id @default(uuid())
   email             String     @unique
   password          String
+  name              String?
+  phone             String?
+  passwordToken     String?
+  tokenSentAt       DateTime?
   role              UserRole
   bars              Bar[]      @relation("OwnerBars")
   ownerId           String?          

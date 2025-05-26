@@ -9,10 +9,15 @@ import {
 } from "react-native";
 import { useGeneralContext } from "@/context/GeneralContext";
 import { getMyBar } from "@/services/bar";
-import { getOpenCommands, Command } from "@/services/commands";
+import { getOpenCommands } from "@/services/commands";
 import { getMenuItems } from "@/services/menuItems";
 import { getTables } from "@/services/tables";
 import { router } from "expo-router";
+import {
+  getLast7DaysRevenue,
+  getLastMonthRevenue,
+  ReportResponse,
+} from "@/services/reports";
 
 export default function HomeScreen() {
   const {
@@ -24,10 +29,11 @@ export default function HomeScreen() {
     refreshNumber,
   } = useGeneralContext();
   const [bar, setBar] = useState<any>(null);
-  const [openCommands, setOpenCommands] = useState<Command[]>([]);
+  const [openCommands, setOpenCommands] = useState<any[]>([]);
   const [menuItemsCount, setMenuItemsCount] = useState(0);
   const [tablesCount, setTablesCount] = useState(0);
-  const [todayRevenue, setTodayRevenue] = useState(0);
+  const [weekRevenue, setWeekRevenue] = useState<ReportResponse | null>(null);
+  const [monthRevenue, setMonthRevenue] = useState<ReportResponse | null>(null);
 
   useEffect(() => {
     loadHomeData();
@@ -55,12 +61,14 @@ export default function HomeScreen() {
           const tables = await getTables(barData.id);
           setTablesCount(tables.length);
 
-          // Calcula receita do dia (simplificado - você pode criar um endpoint específico para isso)
-          const revenue = commands.reduce(
-            (sum, cmd) => sum + (cmd.total || 0),
-            0
-          );
-          setTodayRevenue(revenue);
+          // Carrega relatórios (apenas para owner)
+          if (userRole === "OWNER") {
+            const weekData = await getLast7DaysRevenue(barData.id);
+            setWeekRevenue(weekData);
+
+            const monthData = await getLastMonthRevenue(barData.id);
+            setMonthRevenue(monthData);
+          }
         }
       }
     } catch (error) {
@@ -79,14 +87,16 @@ export default function HomeScreen() {
         flex: 1,
         backgroundColor: color,
         borderRadius: 10,
-        padding: 16,
+        padding: 8,
         margin: 8,
+        marginBottom: 4,
+        marginTop: 0,
         elevation: 3,
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.2,
         shadowRadius: 4,
-        width: "98%",
+        width: "95%",
       }}
     >
       <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: 14 }}>
@@ -105,53 +115,51 @@ export default function HomeScreen() {
     </TouchableOpacity>
   );
 
-  // Seção de ações rápidas
-  const QuickActions = () => (
-    <View style={{ flexDirection: "row", marginVertical: 16 }}>
-      <TouchableOpacity
-        onPress={() => router.push("/(tabs)/commands")}
-        style={{
-          backgroundColor: "#28a745",
-          padding: 12,
-          borderRadius: 8,
-          marginRight: 8,
-          flex: 1,
-          alignItems: "center",
-        }}
-      >
-        <Text style={{ color: "white", fontWeight: "bold" }}>Comandas</Text>
-      </TouchableOpacity>
+  // Seção de relatórios para o dono
+  const RevenueReports = () => {
+    if (userRole !== "OWNER") return null;
 
-      {userRole === "OWNER" && (
-        <TouchableOpacity
-          onPress={() => router.push("/(tabs)/menu")}
+    return (
+      <View style={{ marginTop: 16 }}>
+        <Text
           style={{
-            backgroundColor: "#6f42c1",
-            padding: 12,
-            borderRadius: 8,
-            marginRight: 8,
-            flex: 1,
-            alignItems: "center",
+            fontSize: 18,
+            fontWeight: "bold",
+            marginVertical: 4,
+            color: "#333",
           }}
         >
-          <Text style={{ color: "white", fontWeight: "bold" }}>Cardápio</Text>
-        </TouchableOpacity>
-      )}
+          Relatórios de Receita
+        </Text>
 
-      <TouchableOpacity
-        onPress={() => router.push("/(tabs)/tables")}
-        style={{
-          backgroundColor: "#c8b080",
-          padding: 12,
-          borderRadius: 8,
-          flex: 1,
-          alignItems: "center",
-        }}
-      >
-        <Text style={{ color: "white", fontWeight: "bold" }}>Mesas</Text>
-      </TouchableOpacity>
-    </View>
-  );
+        <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
+          <MetricCard
+            title="Últimos 7 dias"
+            value={`R$ ${weekRevenue?.totalRevenue.toFixed(2) || "0,00"}`}
+            color="#6f42c1"
+          />
+          <MetricCard
+            title="Último mês"
+            value={`R$ ${monthRevenue?.totalRevenue.toFixed(2) || "0,00"}`}
+            color="#c8b080"
+          />
+        </View>
+
+        <View style={{ marginTop: 8 }}>
+          <Text style={{ color: "#6c757d", marginBottom: 4 }}>
+            {weekRevenue
+              ? `${weekRevenue.totalCommands} comandas fechadas`
+              : "Carregando..."}
+          </Text>
+          <Text style={{ color: "#6c757d" }}>
+            {monthRevenue
+              ? `${monthRevenue.itemsSold} itens vendidos no mês`
+              : "Carregando..."}
+          </Text>
+        </View>
+      </View>
+    );
+  };
 
   return (
     <ScrollView style={{ flex: 1, padding: 16, backgroundColor: "#f5f5f5" }}>
@@ -182,7 +190,7 @@ export default function HomeScreen() {
               marginBottom: 2,
             }}
           >
-            Bem-vindo, {userRole === "OWNER" ? "Administrador" : "Atendente"}
+            Bem-vindo, {userRole === "OWNER" ? "Administrador" : "Garçom"}
           </Text>
           <Text
             style={{
@@ -205,7 +213,7 @@ export default function HomeScreen() {
             }}
           >
             <Text style={{ fontSize: 16, fontWeight: "bold", color: "white" }}>
-              {userRole === "OWNER" ? "Administrador" : "Atendente"}
+              {userRole === "OWNER" ? "Administrador" : "Garçom"}
             </Text>
           </View>
           <Text
@@ -222,7 +230,6 @@ export default function HomeScreen() {
 
       {/* Métricas */}
       <View style={{ flexDirection: "column", flexWrap: "wrap" }}>
-        {userRole === "WAITER" && <></>}
         <MetricCard
           title="Comandas Abertas"
           value={openCommands.length}
@@ -230,33 +237,28 @@ export default function HomeScreen() {
           onPress={() => router.push("/(tabs)/commands")}
         />
 
-        <MetricCard
-          title="Mesas Ativas"
-          value={tablesCount}
-          color="#c8b080"
-          onPress={() => router.push("/(tabs)/tables")}
-        />
         {userRole === "OWNER" && (
           <>
-            <MetricCard
-              title="Receita Hoje"
-              value={`R$ ${todayRevenue.toFixed(2)}`}
-              color="#28a745"
-            />
             <MetricCard
               title="Itens no Menu"
               value={menuItemsCount}
               color="#6f42c1"
               onPress={() => router.push("/(tabs)/menu")}
             />
+            <MetricCard
+              title="Mesas Cadastradas"
+              value={tablesCount}
+              color="#c8b080"
+              onPress={() => router.push("/(tabs)/tables")}
+            />
           </>
         )}
       </View>
 
-      {/* Ações Rápidas */}
-      <QuickActions />
+      {/* Relatórios de receita (apenas para dono) */}
+      <RevenueReports />
 
-      {/* Comandas recentes (destaque para garçons) */}
+      {/* Comandas recentes */}
       <Text
         style={{
           fontSize: 18,
@@ -265,17 +267,13 @@ export default function HomeScreen() {
           color: "#333",
         }}
       >
-        {userRole === "OWNER" ? "Visão Geral" : "Minhas Comandas"}
+        {userRole === "OWNER" ? "Comandas Ativas" : "Minhas Comandas"}
       </Text>
 
       {openCommands.length > 0 ? (
         <FlatList
           scrollEnabled={false}
-          data={
-            userRole === "OWNER"
-              ? openCommands
-              : openCommands.filter((cmd) => cmd.openedById === userToken)
-          }
+          data={openCommands}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
             <TouchableOpacity
@@ -309,7 +307,7 @@ export default function HomeScreen() {
                 </View>
                 <View>
                   <Text style={{ color: "#28a745", fontWeight: "bold" }}>
-                    R$ {item.total.toFixed(2)}
+                    R$ {item.total?.toFixed(2) || "0,00"}
                   </Text>
                   <Text
                     style={{
@@ -336,9 +334,7 @@ export default function HomeScreen() {
           }}
         >
           <Text style={{ color: "#6c757d" }}>
-            {userRole === "OWNER"
-              ? "Nenhuma comanda aberta no momento"
-              : "Você não tem comandas abertas"}
+            Nenhuma comanda aberta no momento
           </Text>
         </View>
       )}
