@@ -44,8 +44,8 @@ export default function HomeScreen() {
 
   useEffect(() => {
     if (!userToken) {
-      router.replace("/login");
       refresh();
+      router.replace("/login");
     }
     loadHomeData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -53,6 +53,7 @@ export default function HomeScreen() {
 
   const loadHomeData = async () => {
     try {
+      console.log("role na localhomedata", userRole);
       showLoading();
       if (userToken) {
         // Carrega dados básicos do bar
@@ -74,6 +75,7 @@ export default function HomeScreen() {
 
           // Carrega relatórios (apenas para owner)
           if (userRole === "OWNER") {
+            console.log("carregando relatórios");
             const weekData = await getLast7DaysRevenue(barData.id);
             setWeekRevenue(weekData);
 

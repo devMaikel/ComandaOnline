@@ -575,7 +575,7 @@ export default function CommandsScreen() {
                     ? 200
                     : minimizedMenu
                     ? 0
-                    : 400,
+                    : 350,
                 marginBottom: 4,
                 borderRadius: 6,
                 borderWidth: 1,

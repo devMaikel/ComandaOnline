@@ -28,6 +28,21 @@ export async function POST(req: Request) {
   }
 
   try {
+    // Esse trecho está limitando a um bar por usuário
+    const oneBar = await prisma.bar.findFirst({
+      where: {
+        ownerId: user.id,
+      },
+    });
+
+    if (oneBar) {
+      return NextResponse.json(
+        { message: " Vocé já possui um bar cadastrado" },
+        { status: 400 }
+      );
+    }
+    // Esse trecho está limitando a um bar por usuário
+
     const existingBar = await prisma.bar.findFirst({
       where: {
         name,

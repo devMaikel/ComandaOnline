@@ -1,6 +1,5 @@
 import { router } from "expo-router";
 import {
-  Button,
   View,
   Text,
   TextInput,
@@ -8,6 +7,8 @@ import {
   Alert,
   TouchableOpacity,
   Modal,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { useAuth } from "../../context/AuthContext";
 import { useEffect, useState } from "react";
@@ -21,6 +22,8 @@ import {
   saveToken,
 } from "@/services/login";
 import { useGeneralContext } from "@/context/GeneralContext";
+import { createBar } from "@/services/bar";
+// import { LinearGradient } from "expo-linear-gradient";
 
 export default function LoginScreen() {
   const { login, isAuthenticated, logout } = useAuth();
@@ -33,6 +36,7 @@ export default function LoginScreen() {
     userToken,
     setUserRole,
     userRole,
+    refresh,
   } = useGeneralContext();
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState("");
@@ -41,6 +45,8 @@ export default function LoginScreen() {
   const [waiterEmail, setWaiterEmail] = useState("");
   const [waiterPassword, setWaiterPassword] = useState("");
   const [waiterName, setWaiterName] = useState("");
+  const [barModalVisible, setBarModalVisible] = useState(false);
+  const [barName, setBarName] = useState("");
 
   const handleWaiterRegister = () => {
     if (!validateCredentials({ email: waiterEmail, password: waiterPassword }))
@@ -65,10 +71,36 @@ export default function LoginScreen() {
     }
   };
 
+  const handleCreateBar = async () => {
+    if (!barName.trim()) {
+      Alert.alert("Erro", "Digite o nome do estabelecimento");
+      return;
+    }
+
+    showLoading();
+    try {
+      const newBar = await createBar(barName, userToken);
+      if (newBar) {
+        Alert.alert(
+          "Sucesso",
+          `Estabelecimento "${newBar.name}" criado com sucesso!`
+        );
+        setBarModalVisible(false);
+        setBarName("");
+        refresh(); // Atualiza os dados do usuário/bar
+      }
+    } catch (error: any) {
+      Alert.alert("Erro", error.message || "Falha ao criar estabelecimento");
+    } finally {
+      hideLoading();
+    }
+  };
+
   useEffect(() => {
     showLoading();
     getUserData();
     hideLoading();
+    refresh();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -105,9 +137,10 @@ export default function LoginScreen() {
       const { token } = await loginUser({ email, password });
       setUserToken(token);
       await saveToken(token);
+      await getUserData();
       login();
+      refresh();
       router.replace("/(tabs)/home");
-      getUserData();
     } catch (error: any) {
       Alert.alert("Erro", error.message);
     } finally {
@@ -136,6 +169,7 @@ export default function LoginScreen() {
     removeToken();
     logout();
     setUserToken("");
+    setUserRole("");
   };
 
   const handleRegister = async () => {
@@ -158,260 +192,563 @@ export default function LoginScreen() {
 
   if (isAuthenticated)
     return (
-      <View
-        style={{
-          flex: 1,
-          justifyContent: "center",
-          alignItems: "center",
-          padding: 16,
-        }}
-      >
-        <Text
+      <View style={{ flex: 1, backgroundColor: "#f5f5f5" }}>
+        <View
           style={{
-            fontSize: 24,
-            fontWeight: "bold",
-            marginBottom: 24,
-            color: "#007bff",
+            flex: 1,
+            justifyContent: "center",
+            alignItems: "center",
+            padding: 24,
           }}
         >
-          Minha Conta
-        </Text>
-        <Text style={{ fontSize: 16, marginBottom: 32, color: "#007bff" }}>
-          Email: {userEmail}
-        </Text>
-
-        {userRole === "OWNER" && (
-          <TouchableOpacity
+          <Text
             style={{
-              backgroundColor: "#007bff",
-              paddingHorizontal: 20,
-              paddingVertical: 10,
-              borderRadius: 8,
+              fontSize: 28,
+              fontWeight: "bold",
+              color: "#007bff",
+              textAlign: "center",
+              marginBottom: 24,
             }}
-            onPress={() => setModalVisible(true)}
           >
-            <Text style={{ color: "#fff", fontWeight: "bold" }}>
-              Cadastrar Garçom
-            </Text>
-          </TouchableOpacity>
-        )}
-        <TouchableOpacity
-          onPress={handleLogout}
-          style={{
-            marginTop: 30,
-            backgroundColor: "red",
-            paddingVertical: 10,
-            paddingHorizontal: 20,
-            borderRadius: 8,
-          }}
-        >
-          <Text style={{ color: "white", fontWeight: "bold", fontSize: 16 }}>
-            Logout
+            Minha Conta
           </Text>
-        </TouchableOpacity>
 
-        <Modal
-          visible={modalVisible}
-          animationType="slide"
-          transparent={true}
-          onRequestClose={() => setModalVisible(false)}
-        >
           <View
             style={{
-              flex: 1,
-              backgroundColor: "rgba(0,0,0,0.5)",
-              justifyContent: "center",
-              alignItems: "center",
+              backgroundColor: "#fff",
+              width: "100%",
+              padding: 20,
+              borderRadius: 12,
+              marginBottom: 32,
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.1,
+              shadowRadius: 4,
+              elevation: 3,
             }}
+          >
+            <Text style={{ fontSize: 14, color: "#666", marginBottom: 4 }}>
+              Email:
+            </Text>
+            <Text
+              style={{
+                fontSize: 16,
+                color: "#333",
+                marginBottom: 16,
+                fontWeight: "500",
+              }}
+            >
+              {userEmail}
+            </Text>
+
+            <Text style={{ fontSize: 14, color: "#666", marginBottom: 4 }}>
+              Função:
+            </Text>
+            <Text style={{ fontSize: 16, color: "#333", fontWeight: "500" }}>
+              {userRole === "OWNER" ? "Proprietário" : "Garçom"}
+            </Text>
+          </View>
+
+          {userRole === "OWNER" && (
+            <>
+              <TouchableOpacity
+                style={{
+                  backgroundColor: "#007bff",
+                  padding: 16,
+                  borderRadius: 8,
+                  alignItems: "center",
+                  width: "100%",
+                  marginBottom: 16,
+                }}
+                onPress={() => setBarModalVisible(true)}
+              >
+                <Text
+                  style={{ color: "#fff", fontWeight: "bold", fontSize: 16 }}
+                >
+                  Cadastrar Estabelecimento
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={{
+                  backgroundColor: "#28a745",
+                  padding: 16,
+                  borderRadius: 8,
+                  alignItems: "center",
+                  width: "100%",
+                  marginBottom: 16,
+                }}
+                onPress={() => setModalVisible(true)}
+              >
+                <Text
+                  style={{ color: "#fff", fontWeight: "bold", fontSize: 16 }}
+                >
+                  Cadastrar Garçom
+                </Text>
+              </TouchableOpacity>
+            </>
+          )}
+
+          <TouchableOpacity
+            onPress={handleLogout}
+            style={{
+              backgroundColor: "#dc3545",
+              padding: 16,
+              borderRadius: 8,
+              alignItems: "center",
+              width: "100%",
+              marginTop: 24,
+            }}
+          >
+            <Text style={{ color: "#fff", fontWeight: "bold", fontSize: 16 }}>
+              Sair
+            </Text>
+          </TouchableOpacity>
+
+          <Modal
+            visible={barModalVisible}
+            animationType="slide"
+            transparent={true}
+            onRequestClose={() => setBarModalVisible(false)}
           >
             <View
               style={{
-                width: "80%",
-                backgroundColor: "#fff",
-                padding: 20,
-                borderRadius: 12,
+                flex: 1,
+                backgroundColor: "rgba(0,0,0,0.5)",
+                justifyContent: "center",
+                alignItems: "center",
               }}
             >
-              <Text
-                style={{ fontSize: 18, fontWeight: "bold", marginBottom: 16 }}
+              <View
+                style={{
+                  width: "90%",
+                  backgroundColor: "#fff",
+                  padding: 24,
+                  borderRadius: 12,
+                }}
               >
-                Cadastrar Garçom
-              </Text>
+                <Text
+                  style={{
+                    fontSize: 20,
+                    fontWeight: "bold",
+                    marginBottom: 24,
+                    textAlign: "center",
+                  }}
+                >
+                  Cadastrar Estabelecimento
+                </Text>
 
-              <TextInput
-                placeholder="Email do garçom"
-                value={waiterEmail}
-                onChangeText={setWaiterEmail}
-                autoCapitalize="none"
-                keyboardType="email-address"
-                style={{
-                  width: "100%",
-                  borderColor: "#ccc",
-                  borderWidth: 1,
-                  padding: 10,
-                  marginBottom: 12,
-                  borderRadius: 6,
-                }}
-              />
-              <TextInput
-                placeholder="Nome / Apelido"
-                secureTextEntry
-                value={waiterPassword}
-                onChangeText={setWaiterName}
-                style={{
-                  width: "100%",
-                  borderColor: "#ccc",
-                  borderWidth: 1,
-                  padding: 10,
-                  marginBottom: 16,
-                  borderRadius: 6,
-                }}
-              />
-              <TextInput
-                placeholder="Senha"
-                secureTextEntry
-                value={waiterPassword}
-                onChangeText={setWaiterPassword}
-                style={{
-                  width: "100%",
-                  borderColor: "#ccc",
-                  borderWidth: 1,
-                  padding: 10,
-                  marginBottom: 16,
-                  borderRadius: 6,
-                }}
-              />
+                <TextInput
+                  placeholder="Nome do estabelecimento"
+                  placeholderTextColor="#999"
+                  value={barName}
+                  onChangeText={setBarName}
+                  style={{
+                    height: 50,
+                    borderColor: "#ddd",
+                    borderWidth: 1,
+                    borderRadius: 8,
+                    paddingHorizontal: 16,
+                    marginBottom: 16,
+                    backgroundColor: "#fff",
+                    fontSize: 16,
+                  }}
+                />
 
-              <Button title="Cadastrar" onPress={handleWaiterRegister} />
-              <View style={{ height: 10 }} />
-              <Button
-                title="Cancelar"
-                color="gray"
-                onPress={() => setModalVisible(false)}
-              />
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    marginTop: 16,
+                  }}
+                >
+                  <TouchableOpacity
+                    style={{
+                      flex: 1,
+                      padding: 12,
+                      borderRadius: 6,
+                      alignItems: "center",
+                      backgroundColor: "#6c757d",
+                      marginRight: 8,
+                    }}
+                    onPress={() => setBarModalVisible(false)}
+                  >
+                    <Text style={{ color: "#fff", fontWeight: "bold" }}>
+                      Cancelar
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={{
+                      flex: 1,
+                      padding: 12,
+                      borderRadius: 6,
+                      alignItems: "center",
+                      backgroundColor: "#007bff",
+                      marginLeft: 8,
+                    }}
+                    onPress={handleCreateBar}
+                  >
+                    <Text style={{ color: "#fff", fontWeight: "bold" }}>
+                      Cadastrar
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
             </View>
-          </View>
-        </Modal>
+          </Modal>
+
+          <Modal
+            visible={modalVisible}
+            animationType="slide"
+            transparent={true}
+            onRequestClose={() => setModalVisible(false)}
+          >
+            <View
+              style={{
+                flex: 1,
+                backgroundColor: "rgba(0,0,0,0.5)",
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+            >
+              <View
+                style={{
+                  width: "90%",
+                  backgroundColor: "#fff",
+                  padding: 24,
+                  borderRadius: 12,
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 20,
+                    fontWeight: "bold",
+                    marginBottom: 24,
+                    textAlign: "center",
+                  }}
+                >
+                  Cadastrar Garçom
+                </Text>
+
+                <TextInput
+                  placeholder="Email do garçom"
+                  placeholderTextColor="#999"
+                  value={waiterEmail}
+                  onChangeText={setWaiterEmail}
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                  style={{
+                    height: 50,
+                    borderColor: "#ddd",
+                    borderWidth: 1,
+                    borderRadius: 8,
+                    paddingHorizontal: 16,
+                    marginBottom: 16,
+                    backgroundColor: "#fff",
+                    fontSize: 16,
+                  }}
+                />
+
+                <TextInput
+                  placeholder="Nome / Apelido"
+                  placeholderTextColor="#999"
+                  value={waiterName}
+                  onChangeText={setWaiterName}
+                  style={{
+                    height: 50,
+                    borderColor: "#ddd",
+                    borderWidth: 1,
+                    borderRadius: 8,
+                    paddingHorizontal: 16,
+                    marginBottom: 16,
+                    backgroundColor: "#fff",
+                    fontSize: 16,
+                  }}
+                />
+
+                <TextInput
+                  placeholder="Senha"
+                  placeholderTextColor="#999"
+                  secureTextEntry
+                  value={waiterPassword}
+                  onChangeText={setWaiterPassword}
+                  style={{
+                    height: 50,
+                    borderColor: "#ddd",
+                    borderWidth: 1,
+                    borderRadius: 8,
+                    paddingHorizontal: 16,
+                    marginBottom: 16,
+                    backgroundColor: "#fff",
+                    fontSize: 16,
+                  }}
+                />
+
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    marginTop: 16,
+                  }}
+                >
+                  <TouchableOpacity
+                    style={{
+                      flex: 1,
+                      padding: 12,
+                      borderRadius: 6,
+                      alignItems: "center",
+                      backgroundColor: "#6c757d",
+                      marginRight: 8,
+                    }}
+                    onPress={() => setModalVisible(false)}
+                  >
+                    <Text style={{ color: "#fff", fontWeight: "bold" }}>
+                      Cancelar
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={{
+                      flex: 1,
+                      padding: 12,
+                      borderRadius: 6,
+                      alignItems: "center",
+                      backgroundColor: "#28a745",
+                      marginLeft: 8,
+                    }}
+                    onPress={handleWaiterRegister}
+                  >
+                    <Text style={{ color: "#fff", fontWeight: "bold" }}>
+                      Cadastrar
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </Modal>
+        </View>
       </View>
     );
 
   if (isRegister)
     return (
-      <View style={{ flex: 1, justifyContent: "center", padding: 20 }}>
-        <Text
-          style={{
-            fontSize: 24,
-            fontWeight: "bold",
-            textAlign: "center",
-            marginBottom: 20,
-            color: "#007AFF",
-          }}
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: "#f5f5f5",
+          justifyContent: "center",
+        }}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={{ flex: 1, justifyContent: "center" }}
         >
-          Criar Conta
-        </Text>
-
-        <TextInput
-          placeholder="E-mail"
-          value={email}
-          onChangeText={setEmail}
-          autoCapitalize="none"
-          keyboardType="email-address"
-          style={{
-            height: 48,
-            borderColor: "#ccc",
-            borderWidth: 1,
-            borderRadius: 6,
-            paddingHorizontal: 12,
-            marginBottom: 12,
-            color: "white",
-          }}
-        />
-
-        <TextInput
-          placeholder="Senha"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-          style={{
-            height: 48,
-            borderColor: "#ccc",
-            borderWidth: 1,
-            borderRadius: 6,
-            paddingHorizontal: 12,
-            marginBottom: 12,
-            color: "white",
-          }}
-        />
-
-        <Button title="Cadastrar" onPress={handleRegister} />
-
-        <Pressable onPress={() => setIsRegister(false)}>
-          <Text
-            style={{ color: "#007AFF", textAlign: "center", marginTop: 20 }}
+          <View
+            style={{
+              padding: 24,
+              borderRadius: 12,
+              marginHorizontal: 24,
+              backgroundColor: "#fff",
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.1,
+              shadowRadius: 4,
+              elevation: 3,
+            }}
           >
-            Já tem conta? Entrar
-          </Text>
-        </Pressable>
+            <Text
+              style={{
+                fontSize: 28,
+                fontWeight: "bold",
+                color: "#007bff",
+                textAlign: "center",
+                marginBottom: 24,
+              }}
+            >
+              Criar Conta
+            </Text>
+
+            <TextInput
+              placeholder="E-mail"
+              placeholderTextColor="#999"
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+              keyboardType="email-address"
+              style={{
+                height: 50,
+                borderColor: "#ddd",
+                borderWidth: 1,
+                borderRadius: 8,
+                paddingHorizontal: 16,
+                marginBottom: 16,
+                backgroundColor: "#fff",
+                fontSize: 16,
+              }}
+            />
+
+            <TextInput
+              placeholder="Senha"
+              placeholderTextColor="#999"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              style={{
+                height: 50,
+                borderColor: "#ddd",
+                borderWidth: 1,
+                borderRadius: 8,
+                paddingHorizontal: 16,
+                marginBottom: 16,
+                backgroundColor: "#fff",
+                fontSize: 16,
+              }}
+            />
+
+            <TouchableOpacity
+              style={{
+                backgroundColor: "#007bff",
+                padding: 16,
+                borderRadius: 8,
+                alignItems: "center",
+                marginBottom: 16,
+              }}
+              onPress={handleRegister}
+            >
+              <Text style={{ color: "#fff", fontWeight: "bold", fontSize: 16 }}>
+                Cadastrar
+              </Text>
+            </TouchableOpacity>
+
+            <Pressable onPress={() => setIsRegister(false)}>
+              <Text
+                style={{
+                  color: "#007bff",
+                  textAlign: "center",
+                  marginTop: 16,
+                  fontSize: 16,
+                  fontWeight: "500",
+                }}
+              >
+                Já tem conta? Entrar
+              </Text>
+            </Pressable>
+          </View>
+        </KeyboardAvoidingView>
       </View>
     );
+
   return (
-    <View style={{ flex: 1, justifyContent: "center", padding: 20 }}>
-      <Text
-        style={{
-          fontSize: 24,
-          fontWeight: "bold",
-          textAlign: "center",
-          marginBottom: 20,
-          color: "#007AFF",
-        }}
+    <View
+      style={{ flex: 1, backgroundColor: "#f5f5f5", justifyContent: "center" }}
+    >
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={{ flex: 1, justifyContent: "center" }}
       >
-        Fazer login
-      </Text>
+        <View
+          style={{
+            padding: 24,
+            borderRadius: 12,
+            marginHorizontal: 24,
+            backgroundColor: "#fff",
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 4,
+            elevation: 3,
+          }}
+        >
+          <Text
+            style={{
+              fontSize: 28,
+              fontWeight: "bold",
+              color: "#007bff",
+              textAlign: "center",
+              marginBottom: 8,
+            }}
+          >
+            Bem-vindo
+          </Text>
+          <Text
+            style={{
+              fontSize: 16,
+              color: "#666",
+              textAlign: "center",
+              marginBottom: 32,
+            }}
+          >
+            Faça login para continuar
+          </Text>
 
-      <TextInput
-        placeholder="E-mail"
-        value={email}
-        onChangeText={setEmail}
-        autoCapitalize="none"
-        keyboardType="email-address"
-        style={{
-          height: 48,
-          borderColor: "#ccc",
-          borderWidth: 1,
-          borderRadius: 6,
-          paddingHorizontal: 12,
-          marginBottom: 12,
-          color: "white",
-        }}
-      />
+          <TextInput
+            placeholder="E-mail"
+            placeholderTextColor="#999"
+            value={email}
+            onChangeText={setEmail}
+            autoCapitalize="none"
+            keyboardType="email-address"
+            style={{
+              height: 50,
+              borderColor: "#ddd",
+              borderWidth: 1,
+              borderRadius: 8,
+              paddingHorizontal: 16,
+              marginBottom: 16,
+              backgroundColor: "#fff",
+              fontSize: 16,
+            }}
+          />
 
-      <TextInput
-        placeholder="Senha"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-        style={{
-          height: 48,
-          borderColor: "#ccc",
-          borderWidth: 1,
-          borderRadius: 6,
-          paddingHorizontal: 12,
-          marginBottom: 12,
-          color: "white",
-        }}
-      />
+          <TextInput
+            placeholder="Senha"
+            placeholderTextColor="#999"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            style={{
+              height: 50,
+              borderColor: "#ddd",
+              borderWidth: 1,
+              borderRadius: 8,
+              paddingHorizontal: 16,
+              marginBottom: 16,
+              backgroundColor: "#fff",
+              fontSize: 16,
+            }}
+          />
 
-      <Button title="Entrar" onPress={handleLogin} />
+          <TouchableOpacity
+            style={{
+              backgroundColor: "#007bff",
+              padding: 16,
+              borderRadius: 8,
+              alignItems: "center",
+              marginBottom: 16,
+            }}
+            onPress={handleLogin}
+          >
+            <Text style={{ color: "#fff", fontWeight: "bold", fontSize: 16 }}>
+              Entrar
+            </Text>
+          </TouchableOpacity>
 
-      <Pressable
-        onPress={() => {
-          setIsRegister(true);
-        }}
-      >
-        <Text style={{ color: "#007AFF", textAlign: "center", marginTop: 20 }}>
-          Não tem conta? Cadastre-se
-        </Text>
-      </Pressable>
+          <Pressable onPress={() => setIsRegister(true)}>
+            <Text
+              style={{
+                color: "#007bff",
+                textAlign: "center",
+                marginTop: 16,
+                fontSize: 16,
+                fontWeight: "500",
+              }}
+            >
+              Não tem conta? Cadastre-se
+            </Text>
+          </Pressable>
+        </View>
+      </KeyboardAvoidingView>
     </View>
   );
 }
