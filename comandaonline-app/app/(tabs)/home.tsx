@@ -207,7 +207,7 @@ export default function HomeScreen() {
               }}
             >
               <Text style={{ fontSize: 16, fontWeight: "600" }}>
-                {item.waiterName}
+                {item.waiterName} / {item.waiterEmail}
               </Text>
 
               <View style={{ flexDirection: "row", marginTop: 8 }}>

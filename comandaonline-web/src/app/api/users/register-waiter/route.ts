@@ -29,7 +29,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const { email, password } = await req.json();
+  const { email, password, name } = await req.json();
 
   if (!email || !password) {
     return NextResponse.json(
@@ -57,6 +57,7 @@ export async function POST(req: Request) {
         email,
         password: hashedPassword,
         role: "WAITER",
+        name,
         ownerId: user.id,
       },
     });

@@ -40,6 +40,7 @@ export default function LoginScreen() {
   const [modalVisible, setModalVisible] = useState(false);
   const [waiterEmail, setWaiterEmail] = useState("");
   const [waiterPassword, setWaiterPassword] = useState("");
+  const [waiterName, setWaiterName] = useState("");
 
   const handleWaiterRegister = () => {
     if (!validateCredentials({ email: waiterEmail, password: waiterPassword }))
@@ -49,11 +50,13 @@ export default function LoginScreen() {
       registerWaiter({
         email: waiterEmail,
         password: waiterPassword,
+        name: waiterName,
         token: userToken,
       });
       setModalVisible(false);
       setWaiterEmail("");
       setWaiterPassword("");
+      setWaiterName("");
       Alert.alert("Cadastrado com sucesso");
     } catch (error: any) {
       Alert.alert("Erro", error.message);
@@ -63,7 +66,9 @@ export default function LoginScreen() {
   };
 
   useEffect(() => {
+    showLoading();
     getUserData();
+    hideLoading();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -245,6 +250,20 @@ export default function LoginScreen() {
                   borderWidth: 1,
                   padding: 10,
                   marginBottom: 12,
+                  borderRadius: 6,
+                }}
+              />
+              <TextInput
+                placeholder="Nome / Apelido"
+                secureTextEntry
+                value={waiterPassword}
+                onChangeText={setWaiterName}
+                style={{
+                  width: "100%",
+                  borderColor: "#ccc",
+                  borderWidth: 1,
+                  padding: 10,
+                  marginBottom: 16,
                   borderRadius: 6,
                 }}
               />
