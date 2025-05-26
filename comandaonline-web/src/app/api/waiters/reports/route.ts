@@ -86,6 +86,8 @@ export async function GET(req: NextRequest) {
     },
   });
 
+  waiters.push(user);
+
   const waitersReport = await Promise.all(
     waiters.map(async (waiter) => {
       const openCommands = await prisma.command.findMany({
@@ -110,24 +112,25 @@ export async function GET(req: NextRequest) {
             lte: endDate,
           },
         },
-        include: {
-          items: {
-            where: { deletedAt: null },
-            include: {
-              menuItem: true,
-            },
-          },
-        },
       });
 
-      let itemsSold = 0;
+      const commandItems = await prisma.commandItem.findMany({
+        where: {
+          deletedAt: null,
+          command: {
+            deletedAt: null,
+            createdAt: { gte: startDate, lte: endDate },
+          },
+          addedById: waiter.id,
+        },
+        include: { menuItem: true },
+      });
+
+      const itemsSold = commandItems.length;
       let totalRevenue = 0;
 
-      closedCommands.forEach((command) => {
-        command.items.forEach((item) => {
-          itemsSold += item.quantity;
-          totalRevenue += item.quantity * item.menuItem.price;
-        });
+      commandItems.forEach((item) => {
+        totalRevenue += item.quantity * item.menuItem.price;
       });
 
       return {

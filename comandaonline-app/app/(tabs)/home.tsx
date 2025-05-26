@@ -18,6 +18,10 @@ import {
   getLastMonthRevenue,
   ReportResponse,
 } from "@/services/reports";
+import {
+  getWaitersLastMonthReport,
+  WaitersReportResponse,
+} from "@/services/waiters";
 
 export default function HomeScreen() {
   const {
@@ -27,6 +31,7 @@ export default function HomeScreen() {
     userRole,
     userEmail,
     refreshNumber,
+    refresh,
   } = useGeneralContext();
   const [bar, setBar] = useState<any>(null);
   const [openCommands, setOpenCommands] = useState<any[]>([]);
@@ -34,8 +39,14 @@ export default function HomeScreen() {
   const [tablesCount, setTablesCount] = useState(0);
   const [weekRevenue, setWeekRevenue] = useState<ReportResponse | null>(null);
   const [monthRevenue, setMonthRevenue] = useState<ReportResponse | null>(null);
+  const [waitersReport, setWaitersReport] =
+    useState<WaitersReportResponse | null>(null);
 
   useEffect(() => {
+    if (!userToken) {
+      router.replace("/login");
+      refresh();
+    }
     loadHomeData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshNumber]);
@@ -68,6 +79,9 @@ export default function HomeScreen() {
 
             const monthData = await getLastMonthRevenue(barData.id);
             setMonthRevenue(monthData);
+
+            const waitersData = await getWaitersLastMonthReport(barData.id);
+            setWaitersReport(waitersData);
           }
         }
       }
@@ -157,6 +171,74 @@ export default function HomeScreen() {
               : "Carregando..."}
           </Text>
         </View>
+      </View>
+    );
+  };
+
+  // Seção de desempenho dos garçons
+  const WaitersPerformance = () => {
+    if (userRole !== "OWNER" || !waitersReport) return null;
+
+    return (
+      <View style={{ marginTop: 16 }}>
+        <Text
+          style={{
+            fontSize: 18,
+            fontWeight: "bold",
+            marginVertical: 4,
+            color: "#333",
+          }}
+        >
+          Dados dos Garçons Neste Mês
+        </Text>
+
+        <FlatList
+          scrollEnabled={false}
+          data={waitersReport.waiters}
+          keyExtractor={(item) => item.waiterId}
+          renderItem={({ item }) => (
+            <View
+              style={{
+                backgroundColor: "white",
+                padding: 16,
+                marginBottom: 8,
+                borderRadius: 8,
+                elevation: 2,
+              }}
+            >
+              <Text style={{ fontSize: 16, fontWeight: "600" }}>
+                {item.waiterName}
+              </Text>
+
+              <View style={{ flexDirection: "row", marginTop: 8 }}>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: "#6c757d" }}>Comandas:</Text>
+                  <Text>
+                    <Text style={{ fontWeight: "bold" }}>
+                      {item.openCommandsCount}
+                    </Text>{" "}
+                    abertas /{" "}
+                    <Text style={{ fontWeight: "bold" }}>
+                      {item.closedCommandsCount}
+                    </Text>{" "}
+                    fechadas
+                  </Text>
+                </View>
+
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: "#6c757d" }}>Vendas:</Text>
+                  <Text>
+                    <Text style={{ fontWeight: "bold" }}>{item.itemsSold}</Text>{" "}
+                    itens /{" "}
+                    <Text style={{ fontWeight: "bold", color: "#28a745" }}>
+                      R$ {item.totalRevenue.toFixed(2)}
+                    </Text>
+                  </Text>
+                </View>
+              </View>
+            </View>
+          )}
+        />
       </View>
     );
   };
@@ -257,6 +339,9 @@ export default function HomeScreen() {
 
       {/* Relatórios de receita (apenas para dono) */}
       <RevenueReports />
+
+      {/* Desempenho dos garçons (apenas para dono) */}
+      <WaitersPerformance />
 
       {/* Comandas recentes */}
       <Text

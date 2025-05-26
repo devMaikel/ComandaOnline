@@ -53,13 +53,18 @@ export async function getWaitersLastMonthReport(
       },
     }
   );
+  console.log(`${API_URL}/waiters/reports?barId=${barId}&period=month`, token);
 
   if (!response.ok) {
     const error = await response.json();
     throw new Error(error.message || "Erro ao buscar relatório dos garçons");
   }
 
-  return await response.json();
+  const data = await response.json();
+
+  console.log(data);
+
+  return data;
 }
 
 export async function getWaitersCustomPeriodReport(
