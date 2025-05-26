@@ -71,6 +71,73 @@ export async function POST(req: NextRequest) {
   return NextResponse.json(command, { status: 201 });
 }
 
+// export async function GET(req: NextRequest) {
+//   const user = await getUserFromHeader(req);
+
+//   if (!user) {
+//     return NextResponse.json({ message: "Token inválido" }, { status: 401 });
+//   }
+
+//   const { searchParams } = new URL(req.url);
+//   const barId = searchParams.get("barId");
+
+//   if (!barId) {
+//     return NextResponse.json(
+//       { message: "O parâmetro barId é obrigatório" },
+//       { status: 400 }
+//     );
+//   }
+
+//   const bar = await prisma.bar.findUnique({
+//     where: { id: barId, deletedAt: null },
+//   });
+
+//   if (!bar) {
+//     return NextResponse.json(
+//       { message: "Bar não encontrado" },
+//       { status: 404 }
+//     );
+//   }
+
+//   const isOwnerAccess = user.role === "OWNER" && bar.ownerId === user.id;
+//   const isWaiterAccess = user.role === "WAITER" && user.ownerId === bar.ownerId;
+
+//   if (!isOwnerAccess && !isWaiterAccess) {
+//     return NextResponse.json({ message: "Acesso negado" }, { status: 403 });
+//   }
+
+//   const commands = await prisma.command.findMany({
+//     where: {
+//       barId,
+//       deletedAt: null,
+//       status: "OPEN",
+//     },
+//     orderBy: {
+//       createdAt: "desc",
+//     },
+//     include: {
+//       table: true,
+//       openedBy: {
+//         select: { id: true, email: true },
+//       },
+//       closedBy: {
+//         select: { id: true, email: true },
+//       },
+//       items: {
+//         where: { deletedAt: null },
+//         include: {
+//           menuItem: true,
+//           addedBy: {
+//             select: { id: true, email: true },
+//           },
+//         },
+//       },
+//     },
+//   });
+
+//   return NextResponse.json(commands);
+// }
+
 export async function GET(req: NextRequest) {
   const user = await getUserFromHeader(req);
 
@@ -80,6 +147,7 @@ export async function GET(req: NextRequest) {
 
   const { searchParams } = new URL(req.url);
   const barId = searchParams.get("barId");
+  const status = searchParams.get("status") || "OPEN";
 
   if (!barId) {
     return NextResponse.json(
@@ -106,23 +174,29 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ message: "Acesso negado" }, { status: 403 });
   }
 
+  if (status !== "OPEN" && status !== "CLOSED") {
+    return NextResponse.json(
+      { message: "Status deve ser OPEN ou CLOSED" },
+      { status: 400 }
+    );
+  }
+
   const commands = await prisma.command.findMany({
     where: {
       barId,
       deletedAt: null,
-      status: "OPEN",
+      status: status as "OPEN" | "CLOSED",
     },
     orderBy: {
-      createdAt: "desc",
+      createdAt: status === "OPEN" ? "desc" : "desc",
     },
     include: {
       table: true,
       openedBy: {
         select: { id: true, email: true },
       },
-      closedBy: {
-        select: { id: true, email: true },
-      },
+      closedBy:
+        status === "CLOSED" ? { select: { id: true, email: true } } : undefined,
       items: {
         where: { deletedAt: null },
         include: {

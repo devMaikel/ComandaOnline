@@ -99,11 +99,9 @@ export default function CommandsScreen() {
   };
 
   const loadCommandDetails = async (commandId: string) => {
-    console.log("entrou no loadCommandDetails");
     try {
       showLoading();
       const items = await getCommandItems(commandId);
-      console.log("items: ", items);
       setCommandItems(items);
 
       if (bar) {
