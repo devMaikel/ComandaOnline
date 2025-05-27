@@ -101,7 +101,6 @@ export default function HomeScreen() {
     }
   };
 
-  // Card genérico para métricas
   const MetricCard = ({ title, value, color = "#fa4069", onPress }: any) => (
     <TouchableOpacity
       onPress={onPress}
@@ -137,6 +136,63 @@ export default function HomeScreen() {
     </TouchableOpacity>
   );
 
+  const RevenueMetricCard = ({
+    title,
+    revenue,
+    commandsCount,
+    itemsSold,
+    color = "#fa4069",
+    onPress,
+  }: any) => (
+    <TouchableOpacity
+      onPress={onPress}
+      style={{
+        flex: 1,
+        backgroundColor: color,
+        borderRadius: 10,
+        padding: 12,
+        margin: 8,
+        marginTop: 0,
+        marginBottom: 4,
+        elevation: 3,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+        width: "95%",
+      }}
+    >
+      <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: 14 }}>
+        {title}
+      </Text>
+      <Text
+        style={{
+          color: "white",
+          fontSize: 24,
+          fontWeight: "700",
+          marginTop: 4,
+        }}
+      >
+        R$ {revenue}
+      </Text>
+
+      <View
+        style={{
+          flexDirection: "row",
+          justifyContent: "space-between",
+          marginTop: 8,
+        }}
+      >
+        <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: 12 }}>
+          {commandsCount} comandas
+        </Text>
+        <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: 12 }}>
+          {itemsSold} itens
+        </Text>
+      </View>
+    </TouchableOpacity>
+  );
+
   // Seção de relatórios para o dono
   const RevenueReports = () => {
     if (userRole !== "OWNER") return null;
@@ -154,42 +210,28 @@ export default function HomeScreen() {
           Relatórios de Receita
         </Text>
 
-        <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
-          <MetricCard
-            title="Últimos 7 dias"
-            value={`R$ ${weekRevenue?.totalRevenue.toFixed(2) || "0,00"}`}
-            color="#6f42c1"
-          />
-          <MetricCard
-            title="Último mês"
-            value={`R$ ${monthRevenue?.totalRevenue.toFixed(2) || "0,00"}`}
-            color="#c8b080"
-          />
-          <MetricCard
-            title="Últimas 12h"
-            value={`R$ ${
-              last12HoursRevenue?.totalRevenue.toFixed(2) || "0,00"
-            }`}
+        <View style={{ flexDirection: "column", flexWrap: "wrap" }}>
+          <RevenueMetricCard
+            title="Últimas 12 horas"
+            revenue={last12HoursRevenue?.totalRevenue.toFixed(2) || "0,00"}
+            commandsCount={last12HoursRevenue?.totalCommands || 0}
+            itemsSold={last12HoursRevenue?.itemsSold || 0}
             color="#17a2b8"
           />
-        </View>
-
-        <View style={{ marginTop: 8 }}>
-          <Text style={{ color: "#6c757d", marginBottom: 4 }}>
-            {weekRevenue
-              ? `${weekRevenue.totalCommands} comandas fechadas`
-              : "Carregando..."}
-          </Text>
-          <Text style={{ color: "#6c757d" }}>
-            {monthRevenue
-              ? `${monthRevenue.itemsSold} itens vendidos no mês`
-              : "Carregando..."}
-          </Text>
-          <Text style={{ color: "#6c757d", marginBottom: 4 }}>
-            {last12HoursRevenue
-              ? `${last12HoursRevenue.totalCommands} comandas nas últimas 12h`
-              : "Carregando..."}
-          </Text>
+          <RevenueMetricCard
+            title="Últimos 7 dias"
+            revenue={weekRevenue?.totalRevenue.toFixed(2) || "0,00"}
+            commandsCount={weekRevenue?.totalCommands || 0}
+            itemsSold={weekRevenue?.itemsSold || 0}
+            color="#6f42c1"
+          />
+          <RevenueMetricCard
+            title="Último mês"
+            revenue={monthRevenue?.totalRevenue.toFixed(2) || "0,00"}
+            commandsCount={monthRevenue?.totalCommands || 0}
+            itemsSold={monthRevenue?.itemsSold || 0}
+            color="#c8b080"
+          />
         </View>
       </View>
     );
@@ -333,7 +375,7 @@ export default function HomeScreen() {
       {/* Métricas */}
       <View style={{ flexDirection: "column", flexWrap: "wrap" }}>
         <MetricCard
-          title="Comandas Abertas"
+          title="Comandas Abertas no Momento"
           value={openCommands.length}
           color="#fa4069"
           onPress={() => router.push("/(tabs)/commands")}
