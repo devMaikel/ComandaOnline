@@ -126,11 +126,31 @@ export async function GET(req: NextRequest) {
         include: { menuItem: true },
       });
 
-      const itemsSold = commandItems.length;
+      const allOpenCommands = await prisma.command.findMany({
+        where: {
+          barId,
+          status: "OPEN",
+          deletedAt: null,
+          createdAt: {
+            gte: startDate,
+            lte: endDate,
+          },
+        },
+      });
+      console.log(allOpenCommands);
+      let itemsSold = 0;
       let totalRevenue = 0;
 
       commandItems.forEach((item) => {
-        totalRevenue += item.quantity * item.menuItem.price;
+        console.log(item.commandId);
+        const isOpenCommand = allOpenCommands.some(
+          (cmd) => cmd.id === item.commandId
+        );
+        console.log("isOpenCommand", isOpenCommand);
+        if (!isOpenCommand) {
+          itemsSold += item.quantity;
+          totalRevenue += item.quantity * item.menuItem.price;
+        }
       });
 
       return {
