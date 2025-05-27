@@ -254,7 +254,10 @@ export async function PATCH(req: NextRequest) {
 
   if (!isOwnerAccess && !isWaiterAccess) {
     return NextResponse.json(
-      { message: "Apenas o dono ou um garçom do bar pode fechar a comanda" },
+      {
+        message:
+          "Apenas o dono ou um garçom do estabelecimento pode fechar a comanda",
+      },
       { status: 403 }
     );
   }

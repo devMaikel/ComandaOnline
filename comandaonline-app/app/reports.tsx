@@ -249,7 +249,13 @@ export default function ReportsScreen() {
                   <View style={{ flex: 2 }}>
                     <Text style={{ fontWeight: "500" }}>{item.waiterName}</Text>
                     <Text style={{ fontSize: 12, color: "#6c757d" }}>
-                      {item.commandsClosed} comandas
+                      comandas abertas: {item.openCommandsCount}
+                    </Text>
+                    <Text style={{ fontSize: 12, color: "#6c757d" }}>
+                      comandas fechadas: {item.closedCommandsCount}
+                    </Text>
+                    <Text style={{ fontSize: 12, color: "#6c757d" }}>
+                      itens vendidos: {item.itemsSold}
                     </Text>
                   </View>
                   <Text

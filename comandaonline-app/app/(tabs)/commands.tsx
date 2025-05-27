@@ -78,7 +78,7 @@ export default function CommandsScreen() {
         }
       }
     } catch (error) {
-      console.error("Erro ao carregar bar e comandas:", error);
+      console.error("Erro ao carregar estabelecimento e comandas:", error);
       Alert.alert("Erro", "Não foi possível carregar as comandas");
     } finally {
       hideLoading();

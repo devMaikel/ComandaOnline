@@ -273,7 +273,7 @@ export default function LoginScreen() {
 
               <TouchableOpacity
                 style={{
-                  backgroundColor: "#28a745",
+                  backgroundColor: "#007bff",
                   padding: 16,
                   borderRadius: 8,
                   alignItems: "center",
@@ -291,7 +291,7 @@ export default function LoginScreen() {
 
               <TouchableOpacity
                 style={{
-                  backgroundColor: "#28a745",
+                  backgroundColor: "#007bff",
                   padding: 16,
                   borderRadius: 8,
                   alignItems: "center",

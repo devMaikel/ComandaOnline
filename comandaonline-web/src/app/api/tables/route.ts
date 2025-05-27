@@ -16,7 +16,7 @@ export async function GET(req: Request) {
 
   if (!barId) {
     return NextResponse.json(
-      { message: "ID do bar é obrigatório" },
+      { message: "ID do estabelecimento é obrigatório" },
       { status: 400 }
     );
   }
@@ -37,7 +37,7 @@ export async function GET(req: Request) {
 
   if (!isOwnerAccess && !isWaiterAccess) {
     return NextResponse.json(
-      { message: "Acesso negado às mesas desse bar" },
+      { message: "Acesso negado às mesas desse estabelecimento" },
       { status: 403 }
     );
   }
@@ -80,7 +80,7 @@ export async function POST(req: Request) {
 
   if (!isOwnerAccess && !isWaiterAccess) {
     return NextResponse.json(
-      { message: "Acesso negado para criar mesas nesse bar" },
+      { message: "Acesso negado para criar mesas nesse estabelecimento" },
       { status: 403 }
     );
   }
@@ -99,7 +99,7 @@ export async function POST(req: Request) {
 
   if (table) {
     return NextResponse.json(
-      { message: "Mesa ja existe nesse bar" },
+      { message: "Mesa ja existe nesse estabelecimento" },
       { status: 409 }
     );
   }
@@ -144,7 +144,7 @@ export async function DELETE(req: Request) {
 
   if (!isOwnerAccess) {
     return NextResponse.json(
-      { message: "Apenas o dono do bar pode deletar mesas" },
+      { message: "Apenas o dono do estabelecimento pode deletar mesas" },
       { status: 403 }
     );
   }

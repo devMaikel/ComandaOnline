@@ -52,8 +52,8 @@ export default function MenuScreen() {
         }
       }
     } catch (error) {
-      console.error("Erro ao carregar bares:", error);
-      Alert.alert("Erro", "Não foi possível carregar os bares");
+      console.error("Erro ao carregar estabelecimentos:", error);
+      Alert.alert("Erro", "Não foi possível carregar os estabelecimentos");
     } finally {
       hideLoading();
     }
@@ -198,7 +198,7 @@ export default function MenuScreen() {
               marginBottom: 2,
             }}
           >
-            Cardápio do Bar
+            Cardápio
           </Text>
           <Text
             style={{
@@ -207,7 +207,7 @@ export default function MenuScreen() {
               color: "white",
             }}
           >
-            {selectedBar?.name || "Selecione um bar"}
+            {selectedBar?.name || "Selecione um estabelecimento"}
           </Text>
         </View>
 
@@ -245,7 +245,7 @@ export default function MenuScreen() {
             marginBottom: 4,
           }}
         >
-          Selecione o Bar:
+          Selecione o estabelecimento:
         </Text>
         {bars.length > 0 ? (
           <FlatList
@@ -275,7 +275,7 @@ export default function MenuScreen() {
             )}
           />
         ) : (
-          <Text style={{ color: "#666" }}>Nenhum bar cadastrado</Text>
+          <Text style={{ color: "#666" }}>Nenhuma loja cadastrado</Text>
         )}
       </View>
 
@@ -470,7 +470,7 @@ export default function MenuScreen() {
             />
           ) : (
             <Text style={{ color: "#666", textAlign: "center", marginTop: 20 }}>
-              Nenhum item cadastrado neste bar
+              Nenhum item cadastrado neste estabelecimento
             </Text>
           )}
         </View>

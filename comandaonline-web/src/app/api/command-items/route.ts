@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           message:
-            "Acesso negado, a comanda não pertence a um bar que você tem acesso.",
+            "Acesso negado, a comanda não pertence a um estabelecimento que você tem acesso.",
         },
         { status: 403 }
       );

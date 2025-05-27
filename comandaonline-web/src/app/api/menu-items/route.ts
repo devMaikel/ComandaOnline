@@ -22,7 +22,7 @@ export async function POST(req: Request) {
 
   if (!name || !price || !barId) {
     return NextResponse.json(
-      { message: "Nome, preço e ID do bar são obrigatórios" },
+      { message: "Nome, preço e ID do estabelecimento são obrigatórios" },
       { status: 400 }
     );
   }
@@ -52,7 +52,7 @@ export async function POST(req: Request) {
 
     if (existingItem) {
       return NextResponse.json(
-        { message: "Já existe um item com esse nome no bar" },
+        { message: "Já existe um item com esse nome no estabelecimento" },
         { status: 400 }
       );
     }
@@ -99,7 +99,7 @@ export async function GET(req: Request) {
 
     if (!barId) {
       return NextResponse.json(
-        { message: "ID do bar é obrigatório" },
+        { message: "ID do estabelecimento é obrigatório" },
         { status: 400 }
       );
     }
@@ -110,7 +110,7 @@ export async function GET(req: Request) {
 
     if (!bar) {
       return NextResponse.json(
-        { message: "Bar não encontrado" },
+        { message: "Estabelecimento não encontrado" },
         { status: 404 }
       );
     }
@@ -176,7 +176,7 @@ export async function PATCH(req: Request) {
 
     if (!isOwnerAccess) {
       return NextResponse.json(
-        { message: "Apenas o dono do bar pode editar um item" },
+        { message: "Apenas o dono do estabelecimento pode editar um item" },
         { status: 403 }
       );
     }
@@ -193,7 +193,7 @@ export async function PATCH(req: Request) {
 
       if (nameExists) {
         return NextResponse.json(
-          { message: "Já existe um item com esse nome no bar" },
+          { message: "Já existe um item com esse nome no estabelecimento" },
           { status: 400 }
         );
       }
@@ -262,7 +262,7 @@ export async function DELETE(req: Request) {
 
     if (!isOwnerAccess) {
       return NextResponse.json(
-        { message: "Apenas o dono do bar pode deletar um item" },
+        { message: "Apenas o dono do estabelecimento pode deletar um item" },
         { status: 403 }
       );
     }

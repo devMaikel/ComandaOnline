@@ -47,7 +47,7 @@ export async function createBar(
   });
 
   if (!res.ok) {
-    console.error("Erro ao criar bar:", await res.json());
+    console.error("Erro ao criar estabelecimento:", await res.json());
     return null;
   }
 
@@ -69,7 +69,7 @@ export async function updateBar(
   });
 
   if (!res.ok) {
-    console.error("Erro ao atualizar bar:", await res.json());
+    console.error("Erro ao atualizar estabelecimento:", await res.json());
     return null;
   }
 
@@ -87,7 +87,7 @@ export async function deleteBar(id: string, token: string): Promise<boolean> {
   });
 
   if (!res.ok) {
-    console.error("Erro ao deletar bar:", await res.json());
+    console.error("Erro ao deletar estabelecimento:", await res.json());
     return false;
   }
 

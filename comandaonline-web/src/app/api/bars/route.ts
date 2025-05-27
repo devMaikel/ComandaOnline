@@ -13,7 +13,7 @@ export async function POST(req: Request) {
 
   if (user.role !== "OWNER") {
     return NextResponse.json(
-      { message: "Apenas administradores podem criar bares" },
+      { message: "Apenas administradores podem criar estabelecimentos" },
       { status: 403 }
     );
   }
@@ -22,7 +22,7 @@ export async function POST(req: Request) {
 
   if (!name) {
     return NextResponse.json(
-      { message: "Nome do bar é obrigatório" },
+      { message: "Nome do estabelecimento é obrigatório" },
       { status: 400 }
     );
   }
@@ -37,7 +37,7 @@ export async function POST(req: Request) {
 
     if (oneBar) {
       return NextResponse.json(
-        { message: " Vocé já possui um bar cadastrado" },
+        { message: " Vocé já possui um estabelecimento cadastrado" },
         { status: 400 }
       );
     }
@@ -53,7 +53,7 @@ export async function POST(req: Request) {
 
     if (existingBar) {
       return NextResponse.json(
-        { message: "Você já possui um bar com esse nome" },
+        { message: "Você já possui um estabelecimento com esse nome" },
         { status: 400 }
       );
     }
@@ -69,7 +69,7 @@ export async function POST(req: Request) {
   } catch (error: unknown) {
     if (error instanceof Error) {
       return NextResponse.json(
-        { message: "Erro ao criar o bar", error: error.message },
+        { message: "Erro ao criar o estabelecimento", error: error.message },
         { status: 500 }
       );
     }
@@ -98,7 +98,7 @@ export async function GET(req: Request) {
       });
     } else {
       return NextResponse.json(
-        { message: "Permissão negada para acessar os bares" },
+        { message: "Permissão negada para acessar os estabelecimentos" },
         { status: 403 }
       );
     }
@@ -107,7 +107,7 @@ export async function GET(req: Request) {
   } catch (error: unknown) {
     if (error instanceof Error) {
       return NextResponse.json(
-        { message: "Erro ao buscar bares", error: error.message },
+        { message: "Erro ao buscar estabelecimentos", error: error.message },
         { status: 500 }
       );
     }
@@ -127,7 +127,7 @@ export async function PUT(req: Request) {
 
   if (!id || !name) {
     return NextResponse.json(
-      { message: "ID e novo nome do bar são obrigatórios" },
+      { message: "ID e novo nome do estabelecimento são obrigatórios" },
       { status: 400 }
     );
   }
@@ -151,7 +151,10 @@ export async function PUT(req: Request) {
   } catch (error: unknown) {
     if (error instanceof Error) {
       return NextResponse.json(
-        { message: "Erro ao atualizar o bar", error: error.message },
+        {
+          message: "Erro ao atualizar o estabelecimento",
+          error: error.message,
+        },
         { status: 500 }
       );
     }
@@ -171,7 +174,7 @@ export async function DELETE(req: Request) {
 
   if (!id) {
     return NextResponse.json(
-      { message: "ID do bar é obrigatório" },
+      { message: "ID do estabelecimento é obrigatório" },
       { status: 400 }
     );
   }
@@ -181,7 +184,7 @@ export async function DELETE(req: Request) {
 
     if (!bar || bar.ownerId !== user.id) {
       return NextResponse.json(
-        { message: "Bar não encontrado ou acesso negado" },
+        { message: "estabelecimento não encontrado ou acesso negado" },
         { status: 404 }
       );
     }
@@ -189,7 +192,7 @@ export async function DELETE(req: Request) {
     await prisma.bar.update({ where: { id }, data: { deletedAt: new Date() } });
 
     return NextResponse.json(
-      { message: "Bar deletado com sucesso" },
+      { message: "estabelecimento deletado com sucesso" },
       { status: 200 }
     );
   } catch (error: unknown) {

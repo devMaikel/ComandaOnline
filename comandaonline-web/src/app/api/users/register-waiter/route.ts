@@ -24,7 +24,7 @@ export async function POST(req: Request) {
 
   if (user.role !== "OWNER") {
     return NextResponse.json(
-      { message: "Apenas donos de bar podem criar garçons" },
+      { message: "Apenas donos de estabelecimento podem criar garçons" },
       { status: 403 }
     );
   }
