@@ -157,6 +157,25 @@ export async function DELETE(req: NextRequest) {
       data: { deletedAt: new Date() },
     });
 
+    const command = await prisma.command.findUnique({
+      where: { id: commandId, deletedAt: null },
+      include: { bar: true },
+    });
+
+    if (!command) {
+      return NextResponse.json(
+        { message: "Comanda não encontrada" },
+        { status: 404 }
+      );
+    }
+
+    if (command.status === "CLOSED") {
+      return NextResponse.json(
+        { message: "Comanda já está fechada" },
+        { status: 400 }
+      );
+    }
+
     const commandItems = await prisma.commandItem.findMany({
       where: { commandId, deletedAt: null },
       include: { menuItem: true },
@@ -167,9 +186,13 @@ export async function DELETE(req: NextRequest) {
       0
     );
 
+    // Atualizamos tanto o total quanto o remainingAmount
     await prisma.command.update({
       where: { id: commandId },
-      data: { total: newTotal },
+      data: {
+        total: newTotal,
+        remainingAmount: newTotal - command.paidAmount,
+      },
     });
 
     return NextResponse.json({ message: "Item excluído com sucesso" });
@@ -263,6 +286,25 @@ export async function PATCH(req: NextRequest) {
       },
     });
 
+    const command = await prisma.command.findUnique({
+      where: { id: item.commandId, deletedAt: null },
+      include: { bar: true },
+    });
+
+    if (!command) {
+      return NextResponse.json(
+        { message: "Comanda não encontrada" },
+        { status: 404 }
+      );
+    }
+
+    if (command.status === "CLOSED") {
+      return NextResponse.json(
+        { message: "Comanda já está fechada" },
+        { status: 400 }
+      );
+    }
+
     const commandItems = await prisma.commandItem.findMany({
       where: { commandId: item.commandId, deletedAt: null },
       include: { menuItem: true },
@@ -273,9 +315,13 @@ export async function PATCH(req: NextRequest) {
       0
     );
 
+    // Atualizamos tanto o total quanto o remainingAmount
     await prisma.command.update({
       where: { id: item.commandId },
-      data: { total: newTotal },
+      data: {
+        total: newTotal,
+        remainingAmount: newTotal - command.paidAmount,
+      },
     });
 
     return NextResponse.json(updated);

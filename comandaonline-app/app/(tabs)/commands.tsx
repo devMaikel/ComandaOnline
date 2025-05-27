@@ -27,6 +27,7 @@ import { getMenuItems, MenuItem } from "@/services/menuItems";
 import { Bar, getMyBar } from "@/services/bar";
 import { getTables, Table } from "@/services/tables";
 import { useGeneralContext } from "@/context/GeneralContext";
+import { addPayment, getPayments, Payment } from "@/services/payments";
 
 export default function CommandsScreen() {
   const [commands, setCommands] = useState<Command[]>([]);
@@ -41,10 +42,19 @@ export default function CommandsScreen() {
     notes: "",
   });
   const [editingItem, setEditingItem] = useState<CommandItem | null>(null);
-  const [modalVisible, setModalVisible] = useState(false);
+  const [modalVisible, setModalVisible] = useState<boolean>(false);
   const [selectedTable, setSelectedTable] = useState<Table | null>(null);
-  const [minimizedMenu, setMinimizedMenu] = useState(true);
+  const [minimizedMenu, setMinimizedMenu] = useState<boolean>(true);
   const [newCommandName, setNewCommandName] = useState<string>("");
+  const [paymentModalVisible, setPaymentModalVisible] =
+    useState<boolean>(false);
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [paymentData, setPaymentData] = useState({
+    amount: "",
+    paymentType: "CASH" as const,
+    note: "",
+  });
+  const [showPayments, setShowPayments] = useState(false);
   const { userToken, showLoading, hideLoading, refresh, refreshNumber } =
     useGeneralContext();
 
@@ -67,6 +77,55 @@ export default function CommandsScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bar]);
 
+  const handleAddPayment = async () => {
+    if (!selectedCommand || !paymentData.amount) return;
+
+    try {
+      showLoading();
+      const amount = parseFloat(paymentData.amount);
+      await addPayment(
+        selectedCommand.id,
+        amount,
+        paymentData.paymentType,
+        paymentData.note
+      );
+
+      // Atualiza os valores da comanda
+      const updatedCommand = {
+        ...selectedCommand,
+        paidAmount: selectedCommand.paidAmount + amount,
+        remainingAmount: selectedCommand.remainingAmount - amount,
+      };
+
+      setSelectedCommand(updatedCommand);
+      setPaymentModalVisible(false);
+      setPaymentData({ amount: "", paymentType: "CASH", note: "" });
+      refresh();
+      Alert.alert("Sucesso", "Pagamento registrado com sucesso");
+    } catch (error) {
+      console.error("Erro ao registrar pagamento:", error);
+      Alert.alert("Erro", "Não foi possível registrar o pagamento");
+    } finally {
+      hideLoading();
+    }
+  };
+
+  const loadPayments = async () => {
+    if (!selectedCommand) return;
+
+    try {
+      showLoading();
+      const paymentsData = await getPayments(selectedCommand.id);
+      setPayments(paymentsData);
+      setShowPayments(true);
+    } catch (error) {
+      console.error("Erro ao carregar pagamentos:", error);
+      Alert.alert("Erro", "Não foi possível carregar os pagamentos");
+    } finally {
+      hideLoading();
+    }
+  };
+
   const loadBarAndCommands = async () => {
     try {
       showLoading();
@@ -75,8 +134,10 @@ export default function CommandsScreen() {
         if (barData) {
           setBar(barData);
           const commandsData = await getOpenCommands(barData.id);
-          console.log("commandsData: ", commandsData);
           setCommands(commandsData);
+          const newSelectedComand =
+            commandsData.find((c) => c.id === selectedCommand?.id) || null;
+          setSelectedCommand(newSelectedComand);
         }
       }
     } catch (error) {
@@ -123,13 +184,12 @@ export default function CommandsScreen() {
 
     try {
       showLoading();
-      const addedItem = await addCommandItem(
+      await addCommandItem(
         selectedCommand.id,
         newItem.menuItemId,
         parseInt(newItem.quantity),
         newItem.notes
       );
-      console.log("addedItem: ", addedItem);
       // loadCommandDetails(selectedCommand.id);
       refresh();
       setNewItem({ menuItemId: "", quantity: "1", notes: "" });
@@ -564,6 +624,172 @@ export default function CommandsScreen() {
               </Text>
             </View>
           </View>
+          <Modal
+            animationType="slide"
+            transparent={true}
+            visible={paymentModalVisible}
+            onRequestClose={() => setPaymentModalVisible(false)}
+          >
+            <View
+              style={{
+                flex: 1,
+                justifyContent: "center",
+                alignItems: "center",
+                backgroundColor: "rgba(0,0,0,0.5)",
+              }}
+            >
+              <View
+                style={{
+                  width: "80%",
+                  backgroundColor: "white",
+                  borderRadius: 10,
+                  padding: 20,
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 18,
+                    fontWeight: "bold",
+                    marginBottom: 15,
+                    textAlign: "center",
+                  }}
+                >
+                  Registrar Pagamento
+                </Text>
+
+                <Text style={{ marginBottom: 5 }}>Valor:</Text>
+                <TextInput
+                  placeholder="0.00"
+                  placeholderTextColor="#999"
+                  value={paymentData.amount}
+                  onChangeText={(text) =>
+                    setPaymentData({ ...paymentData, amount: text })
+                  }
+                  keyboardType="numeric"
+                  style={{
+                    height: 50,
+                    borderColor: "#ddd",
+                    borderWidth: 1,
+                    borderRadius: 8,
+                    paddingHorizontal: 16,
+                    marginBottom: 16,
+                    backgroundColor: "#fff",
+                    fontSize: 16,
+                  }}
+                />
+
+                <Text style={{ marginBottom: 5 }}>Tipo de Pagamento:</Text>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    flexWrap: "wrap",
+                    justifyContent: "space-between",
+                    marginBottom: 16,
+                  }}
+                >
+                  {["CASH", "CREDIT_CARD", "DEBIT_CARD", "PIX", "OTHER"].map(
+                    (type) => (
+                      <TouchableOpacity
+                        key={type}
+                        style={{
+                          padding: 10,
+                          borderRadius: 5,
+                          backgroundColor:
+                            paymentData.paymentType === type
+                              ? "#28a745"
+                              : "#e0e0e0",
+                          marginBottom: 8,
+                          width: "48%",
+                        }}
+                        onPress={() =>
+                          setPaymentData({
+                            ...paymentData,
+                            paymentType: type as any,
+                          })
+                        }
+                      >
+                        <Text
+                          style={{
+                            color:
+                              paymentData.paymentType === type
+                                ? "white"
+                                : "black",
+                            textAlign: "center",
+                          }}
+                        >
+                          {type === "CASH" && "Dinheiro"}
+                          {type === "CREDIT_CARD" && "Cartão Crédito"}
+                          {type === "DEBIT_CARD" && "Cartão Débito"}
+                          {type === "PIX" && "PIX"}
+                          {type === "OTHER" && "Outro"}
+                        </Text>
+                      </TouchableOpacity>
+                    )
+                  )}
+                </View>
+
+                <Text style={{ marginBottom: 5 }}>Observação (opcional):</Text>
+                <TextInput
+                  placeholder="Ex: Cliente pagou metade"
+                  placeholderTextColor="#999"
+                  value={paymentData.note}
+                  onChangeText={(text) =>
+                    setPaymentData({ ...paymentData, note: text })
+                  }
+                  style={{
+                    height: 50,
+                    borderColor: "#ddd",
+                    borderWidth: 1,
+                    borderRadius: 8,
+                    paddingHorizontal: 16,
+                    marginBottom: 16,
+                    backgroundColor: "#fff",
+                    fontSize: 16,
+                  }}
+                />
+
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <TouchableOpacity
+                    style={{
+                      borderRadius: 5,
+                      padding: 10,
+                      width: "48%",
+                      alignItems: "center",
+                      backgroundColor: "#6c757d",
+                    }}
+                    onPress={() => setPaymentModalVisible(false)}
+                  >
+                    <Text style={{ color: "white", fontWeight: "bold" }}>
+                      Cancelar
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={{
+                      borderRadius: 5,
+                      padding: 10,
+                      width: "48%",
+                      alignItems: "center",
+                      backgroundColor: !paymentData.amount
+                        ? "#cccccc"
+                        : "#28a745",
+                      opacity: !paymentData.amount ? 0.5 : 1,
+                    }}
+                    onPress={handleAddPayment}
+                    disabled={!paymentData.amount}
+                  >
+                    <Text style={{ color: "white", fontWeight: "bold" }}>
+                      Confirmar
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </Modal>
 
           <View
             style={{
@@ -852,20 +1078,113 @@ export default function CommandsScreen() {
                   {`R$ ${selectedCommand.remainingAmount.toFixed(2)}`}
                 </Text>
               </View>
-              <TouchableOpacity
-                style={{
-                  backgroundColor: "#28a745",
-                  padding: 10,
-                  borderRadius: 5,
-                  width: "20%",
-                  alignItems: "center",
-                }}
-              >
-                <Text>Pagar</Text>
-              </TouchableOpacity>
+              <View style={{ flexDirection: "column", gap: 4 }}>
+                <TouchableOpacity
+                  onPress={() => setPaymentModalVisible(true)}
+                  style={{
+                    backgroundColor: "#28a745",
+                    padding: 6,
+                    borderRadius: 5,
+                    marginRight: 10,
+                    minWidth: 70,
+                    alignItems: "center",
+                  }}
+                >
+                  <Text style={{ color: "white" }}>Pagar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={loadPayments}
+                  style={{
+                    backgroundColor: "#17a2b8",
+                    padding: 6,
+                    borderRadius: 5,
+                    marginRight: 10,
+                    minWidth: 70,
+                    alignItems: "center",
+                  }}
+                >
+                  <Text style={{ color: "white" }}>Ver</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           )}
         </>
+      )}
+      {showPayments && (
+        <View
+          style={{
+            backgroundColor: "white",
+            padding: 15,
+            borderRadius: 8,
+            elevation: 2,
+            marginTop: 10,
+          }}
+        >
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: 10,
+            }}
+          >
+            <Text style={{ fontSize: 16, fontWeight: "bold" }}>
+              Pagamentos Registrados
+            </Text>
+            <TouchableOpacity onPress={() => setShowPayments(false)}>
+              <Text style={{ color: "#dc3545" }}>Fechar</Text>
+            </TouchableOpacity>
+          </View>
+
+          {payments.length > 0 ? (
+            <FlatList
+              data={payments}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => (
+                <View
+                  style={{
+                    padding: 10,
+                    borderBottomWidth: 1,
+                    borderBottomColor: "#eee",
+                  }}
+                >
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <Text style={{ fontWeight: "600" }}>
+                      R$ {item.amount.toFixed(2)}
+                    </Text>
+                    <Text style={{ color: "#6c757d" }}>
+                      {new Date(item.createdAt).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </Text>
+                  </View>
+                  <Text style={{ color: "#6c757d" }}>
+                    {item.paymentType === "CASH" && "Dinheiro"}
+                    {item.paymentType === "CREDIT_CARD" && "Cartão Crédito"}
+                    {item.paymentType === "DEBIT_CARD" && "Cartão Débito"}
+                    {item.paymentType === "PIX" && "PIX"}
+                    {item.paymentType === "OTHER" && "Outro"}
+                  </Text>
+                  {item.note && (
+                    <Text style={{ color: "#6c757d", fontStyle: "italic" }}>
+                      Obs: {item.note}
+                    </Text>
+                  )}
+                </View>
+              )}
+            />
+          ) : (
+            <Text style={{ color: "#6c757d", textAlign: "center" }}>
+              Nenhum pagamento registrado
+            </Text>
+          )}
+        </View>
       )}
     </View>
   );

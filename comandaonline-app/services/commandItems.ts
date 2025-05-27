@@ -34,6 +34,14 @@ export async function addCommandItem(
     body: JSON.stringify({ commandId, menuItemId, quantity, notes }),
   });
 
+  console.log("url: ", `${API_URL}/command-items`, "body: ", {
+    commandId,
+    menuItemId,
+    quantity,
+    notes,
+  });
+  console.log("token no addcommanditem: ", token);
+
   if (!response.ok) {
     const error = await response.json();
     throw new Error(error.message || "Erro ao adicionar item à comanda");
