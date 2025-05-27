@@ -146,6 +146,8 @@ export async function getFullReport(
     }
   );
 
+  console.log(`${API_URL}/reports/full?barId=${barId}&period=${period}`, token);
+
   if (!response.ok) {
     const error = await response.json();
     throw new Error(error.message || "Erro ao buscar relatório completo");

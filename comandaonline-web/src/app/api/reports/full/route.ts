@@ -67,15 +67,19 @@ export async function GET(req: NextRequest) {
       );
   }
 
+  const trueNow = new Date();
+
+  console.log("startDate: ", startDate, "endDate: ", now);
+
   // Obter comandas fechadas no período
   const closedCommands = await prisma.command.findMany({
     where: {
       barId,
       status: "CLOSED",
       deletedAt: null,
-      updatedAt: {
+      createdAt: {
         gte: startDate,
-        lte: now,
+        lte: trueNow,
       },
     },
     include: {
@@ -121,37 +125,111 @@ export async function GET(req: NextRequest) {
   });
 
   // Calcular relatório por garçom
-  const waitersReport: Record<
-    string,
-    {
-      waiterId: string;
-      waiterName: string;
-      waiterEmail: string;
-      totalRevenue: number;
-      commandsClosed: number;
-    }
-  > = {};
-
-  closedCommands.forEach((command) => {
-    if (command.closedBy && command.closedById !== null) {
-      if (!waitersReport[command.closedById]) {
-        waitersReport[command.closedById] = {
-          waiterId: command.closedById,
-          waiterName: command.closedBy.name || command.closedBy.email,
-          waiterEmail: command.closedBy.email,
-          totalRevenue: 0,
-          commandsClosed: 0,
-        };
-      }
-      waitersReport[command.closedById].totalRevenue += command.total || 0;
-      waitersReport[command.closedById].commandsClosed += 1;
-    }
+  const waiters = await prisma.user.findMany({
+    where: {
+      ownerId: bar.ownerId,
+      role: "WAITER",
+      deletedAt: null,
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+    },
   });
+  waiters.push({
+    id: user.id,
+    name: user.name || user.email,
+    email: user.email,
+  });
+  const waitersReport = await Promise.all(
+    waiters.map(async (waiter) => {
+      const openCommands = await prisma.command.findMany({
+        where: {
+          barId,
+          openedById: waiter.id,
+          deletedAt: null,
+          createdAt: {
+            gte: startDate,
+            lte: trueNow,
+          },
+        },
+      });
+
+      const closedCommands = await prisma.command.findMany({
+        where: {
+          barId,
+          closedById: waiter.id,
+          deletedAt: null,
+          updatedAt: {
+            gte: startDate,
+            lte: trueNow,
+          },
+        },
+      });
+
+      const commandItems = await prisma.commandItem.findMany({
+        where: {
+          deletedAt: null,
+          command: {
+            deletedAt: null,
+            createdAt: { gte: startDate, lte: trueNow },
+          },
+          addedById: waiter.id,
+        },
+        include: { menuItem: true },
+      });
+
+      const allOpenCommands = await prisma.command.findMany({
+        where: {
+          barId,
+          status: "OPEN",
+          deletedAt: null,
+          createdAt: {
+            gte: startDate,
+            lte: trueNow,
+          },
+        },
+      });
+      console.log(allOpenCommands);
+      let itemsSold = 0;
+      let totalRevenue = 0;
+
+      commandItems.forEach((item) => {
+        console.log(item.commandId);
+        const isOpenCommand = allOpenCommands.some(
+          (cmd) => cmd.id === item.commandId
+        );
+        console.log("isOpenCommand", isOpenCommand);
+        if (!isOpenCommand) {
+          itemsSold += item.quantity;
+          totalRevenue += item.quantity * item.menuItem.price;
+        }
+      });
+
+      return {
+        waiterId: waiter.id,
+        waiterName: waiter.name || waiter.email,
+        waiterEmail: waiter.email,
+        openCommandsCount: openCommands.length,
+        closedCommandsCount: closedCommands.length,
+        itemsSold,
+        totalRevenue,
+      };
+    })
+  );
+
+  console.log("waitersReport: ", waitersReport);
+
+  waitersReport.sort(
+    (a: { totalRevenue: number }, b: { totalRevenue: number }) =>
+      b.totalRevenue - a.totalRevenue
+  );
 
   return NextResponse.json({
     period,
     startDate,
-    endDate: now,
+    endDate: trueNow,
     totalCommands: closedCommands.length,
     totalRevenue,
     itemsSold,

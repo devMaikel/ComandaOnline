@@ -9,6 +9,7 @@ import {
 import { useGeneralContext } from "@/context/GeneralContext";
 import { getMyBar } from "@/services/bar";
 import { getFullReport } from "@/services/reports";
+import { router } from "expo-router";
 
 export default function ReportsScreen() {
   const { userToken, showLoading, hideLoading, refreshNumber } =
@@ -73,9 +74,10 @@ export default function ReportsScreen() {
       <View
         style={{
           flexDirection: "row",
-          justifyContent: "space-between",
+          justifyContent: "center",
           alignItems: "center",
           marginBottom: 16,
+          marginTop: 16,
           paddingVertical: 12,
           paddingHorizontal: 16,
           backgroundColor: "#007bff",
@@ -97,6 +99,21 @@ export default function ReportsScreen() {
           Relatórios Completos
         </Text>
       </View>
+      <TouchableOpacity
+        style={{
+          backgroundColor: "#dc3545",
+          padding: 16,
+          borderRadius: 8,
+          alignItems: "center",
+          width: "100%",
+          marginBottom: 16,
+        }}
+        onPress={() => router.replace("/(tabs)/login")}
+      >
+        <Text style={{ color: "#fff", fontWeight: "bold", fontSize: 16 }}>
+          Fechar relatório
+        </Text>
+      </TouchableOpacity>
 
       {/* Seletor de período */}
       <View style={{ flexDirection: "row", marginBottom: 16 }}>

@@ -288,6 +288,24 @@ export default function LoginScreen() {
                   Cadastrar Garçom
                 </Text>
               </TouchableOpacity>
+
+              <TouchableOpacity
+                style={{
+                  backgroundColor: "#28a745",
+                  padding: 16,
+                  borderRadius: 8,
+                  alignItems: "center",
+                  width: "100%",
+                  marginBottom: 16,
+                }}
+                onPress={() => router.replace("/reports")}
+              >
+                <Text
+                  style={{ color: "#fff", fontWeight: "bold", fontSize: 16 }}
+                >
+                  Relatórios de Vendas
+                </Text>
+              </TouchableOpacity>
             </>
           )}
 

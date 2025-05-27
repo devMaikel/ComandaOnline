@@ -164,6 +164,10 @@ export async function GET(req: NextRequest) {
       };
     })
   );
+  waitersReport.sort(
+    (a: { totalRevenue: number }, b: { totalRevenue: number }) =>
+      b.totalRevenue - a.totalRevenue
+  );
 
   return NextResponse.json({
     period,
