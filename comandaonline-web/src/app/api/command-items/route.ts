@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
 
     await prisma.command.update({
       where: { id: commandId },
-      data: { total: newTotal },
+      data: { total: newTotal, remainingAmount: newTotal - command.paidAmount },
     });
 
     return NextResponse.json(createdItem, { status: 201 });

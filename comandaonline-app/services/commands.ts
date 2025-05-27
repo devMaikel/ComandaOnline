@@ -4,6 +4,8 @@ import { getToken } from "./login";
 export type CommandStatus = "OPEN" | "CLOSED";
 
 export type Command = {
+  paidAmount: number;
+  remainingAmount: number;
   id: string;
   tableId: string;
   barId: string;
@@ -14,6 +16,7 @@ export type Command = {
   publicHash: string;
   createdAt: string;
   updatedAt: string;
+  name: string;
   deletedAt: string | null;
   table?: {
     id: string;
@@ -40,7 +43,10 @@ export type Command = {
   }[];
 };
 
-export async function createCommand(tableId: string): Promise<Command> {
+export async function createCommand(
+  tableId: string,
+  name?: string
+): Promise<Command> {
   const token = await getToken();
   const response = await fetch(`${API_URL}/commands`, {
     method: "POST",
@@ -48,7 +54,7 @@ export async function createCommand(tableId: string): Promise<Command> {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ tableId }),
+    body: JSON.stringify({ tableId, name: name || "" }),
   });
 
   if (!response.ok) {

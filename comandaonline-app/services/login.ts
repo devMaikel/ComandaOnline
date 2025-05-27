@@ -6,6 +6,7 @@ type LoginPayload = {
   password: string;
   token?: string;
   name?: string;
+  isManager?: boolean;
 };
 
 type User = {
@@ -25,7 +26,7 @@ type LoginResponse = {
 type RegisterResponse = {
   id: string;
   email: string;
-  role: "OWNER" | "WAITER"; // Adapte se tiver mais tipos de role
+  role: "OWNER" | "WAITER" | "MANAGER"; // Adapte se tiver mais tipos de role
   ownerId: string | null;
   deletedAt: string | null;
 };

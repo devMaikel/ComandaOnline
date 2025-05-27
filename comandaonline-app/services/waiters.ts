@@ -62,8 +62,6 @@ export async function getWaitersLastMonthReport(
 
   const data = await response.json();
 
-  console.log(data);
-
   return data;
 }
 

@@ -137,16 +137,13 @@ export async function GET(req: NextRequest) {
           },
         },
       });
-      console.log(allOpenCommands);
       let itemsSold = 0;
       let totalRevenue = 0;
 
       commandItems.forEach((item) => {
-        console.log(item.commandId);
         const isOpenCommand = allOpenCommands.some(
           (cmd) => cmd.id === item.commandId
         );
-        console.log("isOpenCommand", isOpenCommand);
         if (!isOpenCommand) {
           itemsSold += item.quantity;
           totalRevenue += item.quantity * item.menuItem.price;

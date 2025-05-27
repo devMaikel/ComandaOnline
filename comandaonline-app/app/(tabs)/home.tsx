@@ -56,7 +56,6 @@ export default function HomeScreen() {
 
   const loadHomeData = async () => {
     try {
-      console.log("role na localhomedata", userRole);
       showLoading();
       if (userToken) {
         // Carrega dados básicos do bar

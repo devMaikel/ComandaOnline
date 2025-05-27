@@ -69,8 +69,6 @@ export async function GET(req: NextRequest) {
 
   const trueNow = new Date();
 
-  console.log("startDate: ", startDate, "endDate: ", now);
-
   // Obter comandas fechadas no período
   const closedCommands = await prisma.command.findMany({
     where: {
@@ -218,8 +216,6 @@ export async function GET(req: NextRequest) {
       };
     })
   );
-
-  console.log("waitersReport: ", waitersReport);
 
   waitersReport.sort(
     (a: { totalRevenue: number }, b: { totalRevenue: number }) =>

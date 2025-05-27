@@ -9,6 +9,7 @@ import {
   Modal,
   KeyboardAvoidingView,
   Platform,
+  Switch,
 } from "react-native";
 import { useAuth } from "../../context/AuthContext";
 import { useEffect, useState } from "react";
@@ -47,6 +48,7 @@ export default function LoginScreen() {
   const [waiterName, setWaiterName] = useState("");
   const [barModalVisible, setBarModalVisible] = useState(false);
   const [barName, setBarName] = useState("");
+  const [isManager, setIsManager] = useState<boolean>(false);
 
   const handleWaiterRegister = () => {
     if (!validateCredentials({ email: waiterEmail, password: waiterPassword }))
@@ -57,6 +59,7 @@ export default function LoginScreen() {
         email: waiterEmail,
         password: waiterPassword,
         name: waiterName,
+        isManager,
         token: userToken,
       });
       setModalVisible(false);
@@ -504,6 +507,20 @@ export default function LoginScreen() {
                     fontSize: 16,
                   }}
                 />
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    marginBottom: 16,
+                  }}
+                >
+                  <Switch
+                    value={isManager}
+                    onValueChange={setIsManager}
+                    style={{ marginRight: 8 }}
+                  />
+                  <Text>É gerente?</Text>
+                </View>
 
                 <View
                   style={{

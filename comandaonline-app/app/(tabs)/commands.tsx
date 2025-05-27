@@ -44,6 +44,7 @@ export default function CommandsScreen() {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedTable, setSelectedTable] = useState<Table | null>(null);
   const [minimizedMenu, setMinimizedMenu] = useState(true);
+  const [newCommandName, setNewCommandName] = useState<string>("");
   const { userToken, showLoading, hideLoading, refresh, refreshNumber } =
     useGeneralContext();
 
@@ -74,6 +75,7 @@ export default function CommandsScreen() {
         if (barData) {
           setBar(barData);
           const commandsData = await getOpenCommands(barData.id);
+          console.log("commandsData: ", commandsData);
           setCommands(commandsData);
         }
       }
@@ -226,9 +228,10 @@ export default function CommandsScreen() {
 
     try {
       showLoading();
-      const newCmd = await createCommand(selectedTable.id);
+      const newCmd = await createCommand(selectedTable.id, newCommandName);
       console.log("commands: ", commands);
       console.log("newCmd: ", newCmd);
+      setNewCommandName("");
       loadBarAndCommands();
       setSelectedTable(null);
       setModalVisible(false);
@@ -398,6 +401,22 @@ export default function CommandsScreen() {
                     </Pressable>
                   ))}
                 </ScrollView>
+                <TextInput
+                  placeholder="Nome da comanda"
+                  placeholderTextColor="#999"
+                  value={newCommandName}
+                  onChangeText={setNewCommandName}
+                  style={{
+                    height: 50,
+                    borderColor: "#ddd",
+                    borderWidth: 1,
+                    borderRadius: 8,
+                    paddingHorizontal: 16,
+                    marginBottom: 16,
+                    backgroundColor: "#fff",
+                    fontSize: 16,
+                  }}
+                />
 
                 <View
                   style={{
@@ -450,7 +469,7 @@ export default function CommandsScreen() {
               <TouchableOpacity
                 style={{
                   backgroundColor: "white",
-                  padding: 15,
+                  padding: 8,
                   marginBottom: 10,
                   borderRadius: 8,
                   elevation: 2,
@@ -461,15 +480,21 @@ export default function CommandsScreen() {
                   style={{
                     flexDirection: "row",
                     justifyContent: "space-between",
+                    alignItems: "center",
                   }}
                 >
                   <View>
                     <Text style={{ fontSize: 16, fontWeight: "600" }}>
                       Mesa: {item.table?.number || item.tableId}
                     </Text>
-                    <Text style={{ color: "#28a745", marginTop: 5 }}>
+                    <Text style={{ color: "#28a745", marginTop: 0 }}>
                       Total: R$ {item.total.toFixed(2)}
                     </Text>
+                    {item.name.length > 0 && (
+                      <Text style={{ color: "#28a745", marginTop: 0 }}>
+                        {item.name}
+                      </Text>
+                    )}
                   </View>
                   <TouchableOpacity
                     onPress={() => handleCloseCommand(item.id)}
@@ -477,6 +502,7 @@ export default function CommandsScreen() {
                       backgroundColor: "#dc3545",
                       padding: 8,
                       borderRadius: 5,
+                      justifyContent: "center",
                     }}
                   >
                     <Text style={{ color: "white" }}>Fechar conta</Text>
@@ -533,7 +559,8 @@ export default function CommandsScreen() {
                   color: "white",
                 }}
               >
-                Mesa {selectedCommand.table?.number || selectedCommand.tableId}
+                Mesa {selectedCommand.table?.number || selectedCommand.tableId}{" "}
+                - {selectedCommand.name}
               </Text>
             </View>
           </View>
@@ -801,23 +828,41 @@ export default function CommandsScreen() {
                 borderRadius: 8,
                 elevation: 2,
                 marginTop: 10,
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
               }}
             >
-              <Text style={{ fontSize: 16, fontWeight: "bold" }}>
-                Total da Comanda:
-              </Text>
-              <Text
-                style={{ fontSize: 20, color: "#28a745", fontWeight: "bold" }}
+              <View>
+                <Text style={{ fontSize: 16, fontWeight: "bold" }}>
+                  Total da Comanda:{" "}
+                  {` R$ ${commandItems
+                    .reduce(
+                      (total, item) =>
+                        total + (item.menuItem?.price || 0) * item.quantity,
+                      0
+                    )
+                    .toFixed(2)}`}
+                </Text>
+                <Text style={{ fontSize: 16, fontWeight: "bold" }}>
+                  Valor pago: {`R$ ${selectedCommand.paidAmount.toFixed(2)}`}
+                </Text>
+                <Text style={{ fontSize: 16, fontWeight: "bold" }}>
+                  Valor pendente:{" "}
+                  {`R$ ${selectedCommand.remainingAmount.toFixed(2)}`}
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={{
+                  backgroundColor: "#28a745",
+                  padding: 10,
+                  borderRadius: 5,
+                  width: "20%",
+                  alignItems: "center",
+                }}
               >
-                R${" "}
-                {commandItems
-                  .reduce(
-                    (total, item) =>
-                      total + (item.menuItem?.price || 0) * item.quantity,
-                    0
-                  )
-                  .toFixed(2)}
-              </Text>
+                <Text>Pagar</Text>
+              </TouchableOpacity>
             </View>
           )}
         </>

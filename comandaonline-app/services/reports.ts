@@ -155,7 +155,5 @@ export async function getFullReport(
 
   const data = await response.json();
 
-  console.log("data full report: ", data);
-
   return data;
 }
