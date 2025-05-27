@@ -243,6 +243,7 @@ export default function CommandsScreen() {
   };
 
   const startEditing = (item: CommandItem) => {
+    setMinimizedMenu(true);
     setEditingItem(item);
     setNewItem({
       menuItemId: item.menuItemId,

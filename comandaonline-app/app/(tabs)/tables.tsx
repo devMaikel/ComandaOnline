@@ -87,9 +87,13 @@ export default function TablesScreen() {
               await deleteTable(tableId);
               setTables(tables.filter((table) => table.id !== tableId));
               Alert.alert("Sucesso", "Mesa excluída com sucesso");
-            } catch (error) {
+            } catch (error: any) {
               console.error("Erro ao excluir mesa:", error);
-              Alert.alert("Erro", "Não foi possível excluir a mesa");
+              if (error.message) {
+                Alert.alert("Erro", error?.message);
+              } else {
+                Alert.alert("Erro", "Não foi possível excluir a mesa");
+              }
             } finally {
               setLoading(false);
             }

@@ -82,3 +82,27 @@ export async function getCustomPeriodRevenue(
 
   return await response.json();
 }
+
+export async function getLast12HoursRevenue(
+  barId: string
+): Promise<ReportResponse> {
+  const token = await getToken();
+  const response = await fetch(
+    `${API_URL}/commands/reports?barId=${barId}&period=12hours`,
+    {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(
+      error.message || "Erro ao buscar relatório das últimas 12 horas"
+    );
+  }
+
+  return await response.json();
+}

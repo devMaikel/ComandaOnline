@@ -14,6 +14,7 @@ import { getMenuItems } from "@/services/menuItems";
 import { getTables } from "@/services/tables";
 import { router } from "expo-router";
 import {
+  getLast12HoursRevenue,
   getLast7DaysRevenue,
   getLastMonthRevenue,
   ReportResponse,
@@ -41,6 +42,8 @@ export default function HomeScreen() {
   const [monthRevenue, setMonthRevenue] = useState<ReportResponse | null>(null);
   const [waitersReport, setWaitersReport] =
     useState<WaitersReportResponse | null>(null);
+  const [last12HoursRevenue, setLast12HoursRevenue] =
+    useState<ReportResponse | null>(null);
 
   useEffect(() => {
     if (!userToken) {
@@ -84,6 +87,9 @@ export default function HomeScreen() {
 
             const waitersData = await getWaitersLastMonthReport(barData.id);
             setWaitersReport(waitersData);
+
+            const last12HoursData = await getLast12HoursRevenue(barData.id);
+            setLast12HoursRevenue(last12HoursData);
           }
         }
       }
@@ -159,6 +165,13 @@ export default function HomeScreen() {
             value={`R$ ${monthRevenue?.totalRevenue.toFixed(2) || "0,00"}`}
             color="#c8b080"
           />
+          <MetricCard
+            title="Últimas 12h"
+            value={`R$ ${
+              last12HoursRevenue?.totalRevenue.toFixed(2) || "0,00"
+            }`}
+            color="#17a2b8"
+          />
         </View>
 
         <View style={{ marginTop: 8 }}>
@@ -170,6 +183,11 @@ export default function HomeScreen() {
           <Text style={{ color: "#6c757d" }}>
             {monthRevenue
               ? `${monthRevenue.itemsSold} itens vendidos no mês`
+              : "Carregando..."}
+          </Text>
+          <Text style={{ color: "#6c757d", marginBottom: 4 }}>
+            {last12HoursRevenue
+              ? `${last12HoursRevenue.totalCommands} comandas nas últimas 12h`
               : "Carregando..."}
           </Text>
         </View>

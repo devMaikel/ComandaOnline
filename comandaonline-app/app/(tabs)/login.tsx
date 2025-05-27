@@ -85,13 +85,15 @@ export default function LoginScreen() {
           "Sucesso",
           `Estabelecimento "${newBar.name}" criado com sucesso!`
         );
-        setBarModalVisible(false);
-        setBarName("");
-        refresh(); // Atualiza os dados do usuário/bar
+        refresh();
+      } else {
+        Alert.alert("Erro", "Você já possui um estabelecimento cadastrado");
       }
     } catch (error: any) {
       Alert.alert("Erro", error.message || "Falha ao criar estabelecimento");
     } finally {
+      setBarModalVisible(false);
+      setBarName("");
       hideLoading();
     }
   };

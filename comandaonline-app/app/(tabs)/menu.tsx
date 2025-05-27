@@ -84,9 +84,13 @@ export default function MenuScreen() {
       // loadMenuItems(selectedBar.id);
       setAddingItem(false);
       Alert.alert("Item adicionado com sucesso");
-    } catch (error) {
-      console.error("Erro ao criar item:", error);
-      Alert.alert("Erro", "Não foi possível adicionar o item");
+    } catch (error: any) {
+      console.error("Erro ao adicionar item:", error);
+      if (error.message) {
+        Alert.alert("Erro", error?.message);
+      } else {
+        Alert.alert("Erro", "Não foi possível adicionar o item");
+      }
     } finally {
       hideLoading();
     }
@@ -112,9 +116,13 @@ export default function MenuScreen() {
       setNewItemName("");
       setNewItemPrice("");
       Alert.alert("Item atualizado com sucesso");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao atualizar item:", error);
-      Alert.alert("Erro", "Não foi possível atualizar o item");
+      if (error.message) {
+        Alert.alert("Erro", error?.message);
+      } else {
+        Alert.alert("Erro", "Não foi possível atualizar o item");
+      }
     } finally {
       hideLoading();
     }
@@ -134,9 +142,13 @@ export default function MenuScreen() {
               await deleteMenuItem(itemId);
               setMenuItems(menuItems.filter((item) => item.id !== itemId));
               Alert.alert("Item excluido com sucesso");
-            } catch (error) {
+            } catch (error: any) {
               console.error("Erro ao excluir item:", error);
-              Alert.alert("Erro", "Não foi possível excluir o item");
+              if (error.message) {
+                Alert.alert("Erro", error?.message);
+              } else {
+                Alert.alert("Erro", "Não foi possível excluir o item");
+              }
             } finally {
               hideLoading();
             }

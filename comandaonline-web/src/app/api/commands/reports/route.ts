@@ -6,6 +6,7 @@ const prisma = new PrismaClient();
 
 // api/commands/reports?barId=<BAR_ID>&period=month
 // GET /api/commands/reports?barId=<BAR_ID>&period=week
+// GET /api/commands/reports?barId=<BAR_ID>&period=12hours
 // GET /api/commands/reports?barId=<BAR_ID>&period=custom&start=2023-10-01
 export async function GET(req: NextRequest) {
   const user = await getUserFromHeader(req);
@@ -53,6 +54,9 @@ export async function GET(req: NextRequest) {
       break;
     case "month":
       startDate = new Date(now.setMonth(now.getMonth() - 1));
+      break;
+    case "12hours":
+      startDate = new Date(now.setHours(now.getHours() - 12));
       break;
     case "custom":
       const customStart = searchParams.get("start");
