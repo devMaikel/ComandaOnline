@@ -33,7 +33,9 @@ export async function GET(req: Request) {
   }
 
   const isOwnerAccess = user.role === "OWNER" && bar.ownerId === user.id;
-  const isWaiterAccess = user.role === "WAITER" && user.ownerId === bar.ownerId;
+  const isWaiterAccess =
+    (user.role === "WAITER" || user.role === "MANAGER") &&
+    user.ownerId === bar.ownerId;
 
   if (!isOwnerAccess && !isWaiterAccess) {
     return NextResponse.json(
@@ -76,7 +78,9 @@ export async function POST(req: Request) {
   }
 
   const isOwnerAccess = user.role === "OWNER" && bar.ownerId === user.id;
-  const isWaiterAccess = user.role === "WAITER" && user.ownerId === bar.ownerId;
+  const isWaiterAccess =
+    (user.role === "WAITER" || user.role === "MANAGER") &&
+    user.ownerId === bar.ownerId;
 
   if (!isOwnerAccess && !isWaiterAccess) {
     return NextResponse.json(

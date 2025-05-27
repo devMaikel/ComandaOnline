@@ -29,7 +29,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const { email, password, name } = await req.json();
+  const { email, password, name, isManager } = await req.json();
 
   if (!email || !password) {
     return NextResponse.json(
@@ -56,7 +56,7 @@ export async function POST(req: Request) {
       data: {
         email,
         password: hashedPassword,
-        role: "WAITER",
+        role: isManager ? "MANAGER" : "WAITER",
         name,
         ownerId: user.id,
       },

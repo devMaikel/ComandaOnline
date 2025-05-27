@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { tableId } = body;
+  const { tableId, name } = body;
 
   if (!tableId) {
     return NextResponse.json(
@@ -37,26 +37,28 @@ export async function POST(req: NextRequest) {
   const bar = table.bar;
 
   const isOwnerAccess = user.role === "OWNER" && bar.ownerId === user.id;
-  const isWaiterAccess = user.role === "WAITER" && user.ownerId === bar.ownerId;
+  const isWaiterAccess =
+    (user.role === "WAITER" || user.role === "MANAGER") &&
+    user.ownerId === bar.ownerId;
 
   if (!isOwnerAccess && !isWaiterAccess) {
     return NextResponse.json({ message: "Acesso negado" }, { status: 403 });
   }
 
-  const alreadyOpenCommand = await prisma.command.findFirst({
-    where: {
-      tableId,
-      status: "OPEN",
-      deletedAt: null,
-    },
-  });
+  // const alreadyOpenCommand = await prisma.command.findFirst({
+  //   where: {
+  //     tableId,
+  //     status: "OPEN",
+  //     deletedAt: null,
+  //   },
+  // });
 
-  if (alreadyOpenCommand) {
-    return NextResponse.json(
-      { message: "Já existe uma comanda aberta para essa mesa" },
-      { status: 409 }
-    );
-  }
+  // if (alreadyOpenCommand) {
+  //   return NextResponse.json(
+  //     { message: "Já existe uma comanda aberta para essa mesa" },
+  //     { status: 409 }
+  //   );
+  // }
 
   const command = await prisma.command.create({
     data: {
@@ -65,6 +67,7 @@ export async function POST(req: NextRequest) {
       openedById: user.id,
       status: "OPEN",
       publicHash: nanoid(10),
+      name: name,
     },
   });
 
@@ -168,7 +171,9 @@ export async function GET(req: NextRequest) {
   }
 
   const isOwnerAccess = user.role === "OWNER" && bar.ownerId === user.id;
-  const isWaiterAccess = user.role === "WAITER" && user.ownerId === bar.ownerId;
+  const isWaiterAccess =
+    (user.role === "WAITER" || user.role === "MANAGER") &&
+    user.ownerId === bar.ownerId;
 
   if (!isOwnerAccess && !isWaiterAccess) {
     return NextResponse.json({ message: "Acesso negado" }, { status: 403 });
@@ -250,7 +255,8 @@ export async function PATCH(req: NextRequest) {
   const isOwnerAccess =
     user.role === "OWNER" && command.bar.ownerId === user.id;
   const isWaiterAccess =
-    user.role === "WAITER" && user.ownerId === command.bar.ownerId;
+    (user.role === "WAITER" || user.role === "MANAGER") &&
+    user.ownerId === command.bar.ownerId;
 
   if (!isOwnerAccess && !isWaiterAccess) {
     return NextResponse.json(

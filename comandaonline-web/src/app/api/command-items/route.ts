@@ -44,7 +44,8 @@ export async function POST(req: NextRequest) {
     const isOwnerAccess =
       user.role === "OWNER" && command.bar.ownerId === user.id;
     const isWaiterAccess =
-      user.role === "WAITER" && user.ownerId === command.bar.ownerId;
+      (user.role === "WAITER" || user.role === "MANAGER") &&
+      user.ownerId === command.bar.ownerId;
 
     if (!isOwnerAccess && !isWaiterAccess) {
       return NextResponse.json(
