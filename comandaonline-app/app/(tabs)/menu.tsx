@@ -26,7 +26,7 @@ export default function MenuScreen() {
   const [newItemPrice, setNewItemPrice] = useState("");
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [addingItem, setAddingItem] = useState(false);
-  const { showLoading, hideLoading } = useGeneralContext();
+  const { showLoading, hideLoading, refresh } = useGeneralContext();
 
   useEffect(() => {
     loadBars();
@@ -92,6 +92,7 @@ export default function MenuScreen() {
         Alert.alert("Erro", "Não foi possível adicionar o item");
       }
     } finally {
+      refresh();
       hideLoading();
     }
   };
@@ -124,6 +125,7 @@ export default function MenuScreen() {
         Alert.alert("Erro", "Não foi possível atualizar o item");
       }
     } finally {
+      refresh();
       hideLoading();
     }
   };
@@ -150,6 +152,7 @@ export default function MenuScreen() {
                 Alert.alert("Erro", "Não foi possível excluir o item");
               }
             } finally {
+              refresh();
               hideLoading();
             }
           },
@@ -288,17 +291,6 @@ export default function MenuScreen() {
           elevation: 2,
         }}
       >
-        {/* <Text
-          style={{
-            fontSize: 18,
-            fontWeight: "bold",
-            marginBottom: 15,
-            color: "#333",
-          }}
-        >
-          {editingItem ? "Editar Item" : "Adicionar Novo Item"}
-        </Text> */}
-
         {(addingItem || editingItem) && (
           <>
             <TextInput
@@ -306,6 +298,7 @@ export default function MenuScreen() {
               placeholderTextColor="#666666"
               value={newItemName}
               onChangeText={setNewItemName}
+              maxLength={24}
               style={{
                 borderWidth: 1,
                 borderColor: "#ddd",
@@ -321,8 +314,9 @@ export default function MenuScreen() {
               placeholder="Preço"
               placeholderTextColor="#666666"
               value={newItemPrice}
-              onChangeText={setNewItemPrice}
+              onChangeText={(text) => setNewItemPrice(text.replace(/,/g, "."))}
               keyboardType="numeric"
+              maxLength={7}
               style={{
                 borderWidth: 1,
                 borderColor: "#ddd",

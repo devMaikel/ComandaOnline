@@ -26,7 +26,7 @@ type LoginResponse = {
 type RegisterResponse = {
   id: string;
   email: string;
-  role: "OWNER" | "WAITER" | "MANAGER"; // Adapte se tiver mais tipos de role
+  role: "OWNER" | "WAITER" | "MANAGER";
   ownerId: string | null;
   deletedAt: string | null;
 };

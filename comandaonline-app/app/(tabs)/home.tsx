@@ -333,7 +333,14 @@ export default function HomeScreen() {
               marginBottom: 2,
             }}
           >
-            Bem-vindo, {userRole === "OWNER" ? "Administrador" : "Garçom"}
+            Bem-vindo,{" "}
+            {userRole === "OWNER"
+              ? "Administrador"
+              : userRole === "WAITER"
+              ? "Garçom"
+              : userRole === "MANAGER"
+              ? "Gerente"
+              : "Desconhecido"}
           </Text>
           <Text
             style={{
@@ -356,7 +363,13 @@ export default function HomeScreen() {
             }}
           >
             <Text style={{ fontSize: 16, fontWeight: "bold", color: "white" }}>
-              {userRole === "OWNER" ? "Administrador" : "Garçom"}
+              {userRole === "OWNER"
+                ? "Administrador"
+                : userRole === "WAITER"
+                ? "Garçom"
+                : userRole === "MANAGER"
+                ? "Gerente"
+                : "Desconhecido"}
             </Text>
           </View>
           <Text

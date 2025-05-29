@@ -11,7 +11,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ message: "Token inválido" }, { status: 401 });
   }
 
-  if (user.role !== "OWNER") {
+  if (user.role === "WAITER") {
     return NextResponse.json(
       { message: "Apenas administradores podem adicionar itens ao menu" },
       { status: 403 }
@@ -173,11 +173,16 @@ export async function PATCH(req: Request) {
       );
     }
 
-    const isOwnerAccess = user.role === "OWNER" && item.bar.ownerId === user.id;
+    const isOwnerAccess =
+      (user.role === "OWNER" || user.role === "MANAGER") &&
+      item.bar.ownerId === user.id;
 
     if (!isOwnerAccess) {
       return NextResponse.json(
-        { message: "Apenas o dono do estabelecimento pode editar um item" },
+        {
+          message:
+            "Apenas o administradores e gerentes do estabelecimento podem editar um item",
+        },
         { status: 403 }
       );
     }
@@ -259,11 +264,16 @@ export async function DELETE(req: Request) {
       );
     }
 
-    const isOwnerAccess = user.role === "OWNER" && item.bar.ownerId === user.id;
+    const isOwnerAccess =
+      (user.role === "OWNER" || user.role === "MANAGER") &&
+      item.bar.ownerId === user.id;
 
     if (!isOwnerAccess) {
       return NextResponse.json(
-        { message: "Apenas o dono do estabelecimento pode deletar um item" },
+        {
+          message:
+            "Apenas o administrador ou gerente do estabelecimento pode deletar um item",
+        },
         { status: 403 }
       );
     }

@@ -97,6 +97,7 @@ export default function LoginScreen() {
     } finally {
       setBarModalVisible(false);
       setBarName("");
+      refresh();
       hideLoading();
     }
   };
@@ -175,6 +176,7 @@ export default function LoginScreen() {
     logout();
     setUserToken("");
     setUserRole("");
+    refresh();
   };
 
   const handleRegister = async () => {
@@ -250,7 +252,13 @@ export default function LoginScreen() {
               Função:
             </Text>
             <Text style={{ fontSize: 16, color: "#333", fontWeight: "500" }}>
-              {userRole === "OWNER" ? "Proprietário" : "Garçom"}
+              {userRole === "OWNER"
+                ? "Administrador"
+                : userRole === "WAITER"
+                ? "Garçom"
+                : userRole === "MANAGER"
+                ? "Gerente"
+                : "Desconhecido"}
             </Text>
           </View>
 
@@ -366,6 +374,7 @@ export default function LoginScreen() {
                   placeholderTextColor="#666666"
                   value={barName}
                   onChangeText={setBarName}
+                  maxLength={24}
                   style={{
                     height: 50,
                     borderColor: "#ddd",
@@ -480,6 +489,7 @@ export default function LoginScreen() {
                   placeholderTextColor="#666666"
                   value={waiterName}
                   onChangeText={setWaiterName}
+                  maxLength={16}
                   style={{
                     height: 50,
                     borderColor: "#ddd",

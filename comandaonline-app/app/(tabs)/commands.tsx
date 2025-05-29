@@ -29,6 +29,7 @@ import { Bar, getMyBar } from "@/services/bar";
 import { getTables, Table } from "@/services/tables";
 import { useGeneralContext } from "@/context/GeneralContext";
 import { addPayment, getPayments, Payment } from "@/services/payments";
+import { IconSymbol } from "@/components/ui/IconSymbol";
 
 export default function CommandsScreen() {
   const [commands, setCommands] = useState<Command[]>([]);
@@ -56,10 +57,15 @@ export default function CommandsScreen() {
     paymentType: "CASH" as const,
     note: "",
   });
-  const [showPayments, setShowPayments] = useState(false);
-  const [showClosedCommands, setShowClosedCommands] = useState(false);
+  const [showPayments, setShowPayments] = useState<boolean>(false);
+  const [showClosedCommands, setShowClosedCommands] = useState<boolean>(false);
+  const [searchTerm, setSearchTerm] = useState<string>("");
   const { userToken, showLoading, hideLoading, refresh, refreshNumber } =
     useGeneralContext();
+
+  const filteredMenuItems = menuItems.filter((item) =>
+    item.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   useEffect(() => {
     loadBarAndCommands();
@@ -495,6 +501,7 @@ export default function CommandsScreen() {
                   placeholderTextColor="#666666"
                   value={newCommandName}
                   onChangeText={setNewCommandName}
+                  maxLength={12}
                   style={{
                     height: 50,
                     borderColor: "#ddd",
@@ -698,11 +705,13 @@ export default function CommandsScreen() {
                 <Text style={{ marginBottom: 5 }}>Valor:</Text>
                 <TextInput
                   placeholder="0.00"
+                  maxLength={7}
                   placeholderTextColor="#666666"
                   value={paymentData.amount}
-                  onChangeText={(text) =>
-                    setPaymentData({ ...paymentData, amount: text })
-                  }
+                  onChangeText={(text) => {
+                    const normalizedText = text.replace(",", ".");
+                    setPaymentData({ ...paymentData, amount: normalizedText });
+                  }}
                   keyboardType="numeric"
                   style={{
                     height: 50,
@@ -772,6 +781,7 @@ export default function CommandsScreen() {
                   placeholder="Ex: Cliente pagou metade"
                   placeholderTextColor="#666666"
                   value={paymentData.note}
+                  maxLength={24}
                   onChangeText={(text) =>
                     setPaymentData({ ...paymentData, note: text })
                   }
@@ -864,8 +874,47 @@ export default function CommandsScreen() {
                   <Text>{minimizedMenu ? "Expandir" : "Minimizar"}</Text>
                 </TouchableOpacity>
               </View>
+              {!minimizedMenu && (
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    backgroundColor: "white",
+                    borderRadius: 6,
+                    borderWidth: 1,
+                    borderColor: "#e0e0e0",
+                    marginBottom: 2,
+                    marginTop: 2,
+                    paddingHorizontal: 10,
+                  }}
+                >
+                  <IconSymbol
+                    size={20}
+                    name="search"
+                    color="#666666"
+                    style={{ marginRight: 8 }}
+                  />
+                  <TextInput
+                    placeholder="Buscar item..."
+                    placeholderTextColor="#666666"
+                    value={searchTerm}
+                    onChangeText={setSearchTerm}
+                    style={{
+                      flex: 1,
+                      paddingVertical: 10,
+                      color: "#000000",
+                      backgroundColor: "#fff",
+                    }}
+                  />
+                  {searchTerm.length > 0 && (
+                    <TouchableOpacity onPress={() => setSearchTerm("")}>
+                      <IconSymbol size={20} name="close" color="#666666" />
+                    </TouchableOpacity>
+                  )}
+                </View>
+              )}
 
-              <Text style={{ marginBottom: 0 }}>Item do Menu:</Text>
+              <Text style={{ marginBottom: 0 }}>Itens do Menu:</Text>
               <ScrollView
                 style={{
                   maxHeight:
@@ -880,37 +929,45 @@ export default function CommandsScreen() {
                   borderColor: "#e0e0e0",
                 }}
               >
-                {menuItems.map((item) => (
-                  <TouchableOpacity
-                    key={item.id}
-                    onPress={() =>
-                      setNewItem({
-                        ...newItem,
-                        menuItemId: item.id,
-                        price: item.price,
-                      })
-                    }
-                    style={{
-                      padding: 12,
-                      backgroundColor:
-                        newItem.menuItemId === item.id ? "#e3f2fd" : "white",
-                      borderBottomWidth: 1,
-                      borderBottomColor: "#f5f5f5",
-                    }}
-                  >
-                    <View
+                {filteredMenuItems.length > 0 ? (
+                  filteredMenuItems.map((item) => (
+                    <TouchableOpacity
+                      key={item.id}
+                      onPress={() =>
+                        setNewItem({
+                          ...newItem,
+                          menuItemId: item.id,
+                          price: item.price,
+                        })
+                      }
                       style={{
-                        flexDirection: "row",
-                        justifyContent: "space-between",
+                        padding: 12,
+                        backgroundColor:
+                          newItem.menuItemId === item.id ? "#e3f2fd" : "white",
+                        borderBottomWidth: 1,
+                        borderBottomColor: "#f5f5f5",
                       }}
                     >
-                      <Text style={{ fontWeight: "500" }}>{item.name}</Text>
-                      <Text style={{ color: "#28a745" }}>
-                        R$ {item.price.toFixed(2)}
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
-                ))}
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          justifyContent: "space-between",
+                        }}
+                      >
+                        <Text style={{ fontWeight: "500" }}>{item.name}</Text>
+                        <Text style={{ color: "#28a745" }}>
+                          R$ {item.price.toFixed(2)}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                  ))
+                ) : (
+                  <View style={{ padding: 12, alignItems: "center" }}>
+                    <Text style={{ color: "#6c757d" }}>
+                      Nenhum item cadastrado
+                    </Text>
+                  </View>
+                )}
               </ScrollView>
 
               {((newItem.menuItemId && !minimizedMenu) || editingItem) && (
@@ -922,6 +979,7 @@ export default function CommandsScreen() {
                       setNewItem({ ...newItem, quantity: text })
                     }
                     keyboardType="numeric"
+                    maxLength={3}
                     style={{
                       borderWidth: 1,
                       borderColor: "#ddd",
@@ -935,6 +993,7 @@ export default function CommandsScreen() {
                   <Text style={{ marginBottom: 5 }}>Observações:</Text>
                   <TextInput
                     value={newItem.notes}
+                    maxLength={16}
                     onChangeText={(text) =>
                       setNewItem({ ...newItem, notes: text })
                     }
@@ -1063,7 +1122,7 @@ export default function CommandsScreen() {
                       </Text>
                     )}
                     <Text style={{ color: "#28a745", marginTop: 5 }}>
-                      R$ {(item.menuItem?.price || 0) * item.quantity}
+                      R$ {(item.unitPrice || 0) * item.quantity}
                     </Text>
                   </View>
                   <View style={{ flexDirection: "row" }}>
@@ -1116,7 +1175,7 @@ export default function CommandsScreen() {
                   {` R$ ${commandItems
                     .reduce(
                       (total, item) =>
-                        total + (item.menuItem?.price || 0) * item.quantity,
+                        total + (item.unitPrice || 0) * item.quantity,
                       0
                     )
                     .toFixed(2)}`}

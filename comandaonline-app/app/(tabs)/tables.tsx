@@ -19,7 +19,7 @@ export default function TablesScreen() {
   const [newTableNumber, setNewTableNumber] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { userToken } = useGeneralContext();
+  const { userToken, refresh } = useGeneralContext();
 
   useEffect(() => {
     loadBarAndTables();
@@ -69,6 +69,7 @@ export default function TablesScreen() {
           : "Não foi possível adicionar a mesa"
       );
     } finally {
+      refresh();
       setLoading(false);
     }
   };
@@ -95,6 +96,7 @@ export default function TablesScreen() {
                 Alert.alert("Erro", "Não foi possível excluir a mesa");
               }
             } finally {
+              refresh();
               setLoading(false);
             }
           },
@@ -223,6 +225,7 @@ export default function TablesScreen() {
               value={newTableNumber}
               onChangeText={setNewTableNumber}
               keyboardType="numeric"
+              maxLength={3}
               style={{
                 borderWidth: 1,
                 borderColor: "#ddd",
