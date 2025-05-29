@@ -11,6 +11,7 @@ export type CommandItem = {
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
+  unitPrice: number;
   menuItem?: {
     id: string;
     name: string;

@@ -75,6 +75,7 @@ export async function POST(req: NextRequest) {
         quantity,
         notes,
         addedById: user.id,
+        unitPrice: menuItem.price,
       },
     });
 
@@ -84,7 +85,7 @@ export async function POST(req: NextRequest) {
     });
 
     const newTotal = commandItems.reduce(
-      (sum, item) => sum + item.menuItem.price * item.quantity,
+      (sum, item) => sum + item.unitPrice * item.quantity,
       0
     );
 
@@ -182,7 +183,7 @@ export async function DELETE(req: NextRequest) {
     });
 
     const newTotal = commandItems.reduce(
-      (sum, item) => sum + item.menuItem.price * item.quantity,
+      (sum, item) => sum + item.unitPrice * item.quantity,
       0
     );
 
@@ -311,7 +312,7 @@ export async function PATCH(req: NextRequest) {
     });
 
     const newTotal = commandItems.reduce(
-      (sum, item) => sum + item.menuItem.price * item.quantity,
+      (sum, item) => sum + item.unitPrice * item.quantity,
       0
     );
 

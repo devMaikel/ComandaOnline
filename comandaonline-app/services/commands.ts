@@ -85,7 +85,7 @@ export async function getOpenCommands(barId: string): Promise<Command[]> {
 export async function getClosedCommands(barId: string): Promise<Command[]> {
   const token = await getToken();
   const response = await fetch(
-    `${API_URL}/commands?barId=${barId}?status=CLOSED`,
+    `${API_URL}/commands?barId=${barId}&status=CLOSED`,
     {
       method: "GET",
       headers: {

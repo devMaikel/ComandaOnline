@@ -15,6 +15,7 @@ import {
   getOpenCommands,
   closeCommand,
   createCommand,
+  getClosedCommands,
 } from "@/services/commands";
 import {
   CommandItem,
@@ -40,6 +41,7 @@ export default function CommandsScreen() {
     menuItemId: "",
     quantity: "1",
     notes: "",
+    price: 0,
   });
   const [editingItem, setEditingItem] = useState<CommandItem | null>(null);
   const [modalVisible, setModalVisible] = useState<boolean>(false);
@@ -55,6 +57,7 @@ export default function CommandsScreen() {
     note: "",
   });
   const [showPayments, setShowPayments] = useState(false);
+  const [showClosedCommands, setShowClosedCommands] = useState(false);
   const { userToken, showLoading, hideLoading, refresh, refreshNumber } =
     useGeneralContext();
 
@@ -133,7 +136,9 @@ export default function CommandsScreen() {
         const barData = await getMyBar(userToken);
         if (barData) {
           setBar(barData);
-          const commandsData = await getOpenCommands(barData.id);
+          const commandsData = showClosedCommands
+            ? await getClosedCommands(barData.id)
+            : await getOpenCommands(barData.id);
           setCommands(commandsData);
           const newSelectedComand =
             commandsData.find((c) => c.id === selectedCommand?.id) || null;
@@ -192,7 +197,7 @@ export default function CommandsScreen() {
       );
       // loadCommandDetails(selectedCommand.id);
       refresh();
-      setNewItem({ menuItemId: "", quantity: "1", notes: "" });
+      setNewItem({ menuItemId: "", quantity: "1", notes: "", price: 0 });
       Alert.alert("Sucesso", "Item adicionado à comanda");
     } catch (error) {
       console.error("Erro ao adicionar item:", error);
@@ -216,7 +221,7 @@ export default function CommandsScreen() {
       refresh();
 
       setEditingItem(null);
-      setNewItem({ menuItemId: "", quantity: "1", notes: "" });
+      setNewItem({ menuItemId: "", quantity: "1", notes: "", price: 0 });
       Alert.alert("Sucesso", "Item atualizado com sucesso");
     } catch (error) {
       console.error("Erro ao atualizar item:", error);
@@ -312,12 +317,13 @@ export default function CommandsScreen() {
       menuItemId: item.menuItemId,
       quantity: item.quantity.toString(),
       notes: item.notes || "",
+      price: 0,
     });
   };
 
   const cancelEditing = () => {
     setEditingItem(null);
-    setNewItem({ menuItemId: "", quantity: "1", notes: "" });
+    setNewItem({ menuItemId: "", quantity: "1", notes: "", price: 0 });
   };
 
   return (
@@ -391,20 +397,43 @@ export default function CommandsScreen() {
             </View>
           </View>
 
-          <TouchableOpacity
-            onPress={() => setModalVisible(true)}
-            style={{
-              backgroundColor: "#28a745",
-              padding: 15,
-              borderRadius: 8,
-              marginBottom: 20,
-              alignItems: "center",
-            }}
-          >
-            <Text style={{ color: "white", fontWeight: "bold" }}>
-              Nova Comanda
-            </Text>
-          </TouchableOpacity>
+          <View style={{ marginBottom: 20 }}>
+            <TouchableOpacity
+              onPress={() => {
+                setShowClosedCommands(!showClosedCommands);
+                refresh();
+              }}
+              style={{
+                backgroundColor: showClosedCommands ? "#6c757d" : "#17a2b8",
+                padding: 15,
+                borderRadius: 8,
+                marginBottom: 10,
+                alignItems: "center",
+              }}
+            >
+              <Text style={{ color: "white", fontWeight: "bold" }}>
+                {showClosedCommands
+                  ? "Mostrar Comandas Abertas"
+                  : "Mostrar Comandas Fechadas"}
+              </Text>
+            </TouchableOpacity>
+
+            {!showClosedCommands && (
+              <TouchableOpacity
+                onPress={() => setModalVisible(true)}
+                style={{
+                  backgroundColor: "#28a745",
+                  padding: 15,
+                  borderRadius: 8,
+                  alignItems: "center",
+                }}
+              >
+                <Text style={{ color: "white", fontWeight: "bold" }}>
+                  Nova Comanda
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
 
           <Modal
             animationType="slide"
@@ -556,8 +585,14 @@ export default function CommandsScreen() {
                         {item.name}
                       </Text>
                     )}
+                    <Text style={{ color: "#6c757d", marginTop: 0 }}>
+                      {item.status === "CLOSED" ? "Fechada" : "Aberta"} em:{" "}
+                      {item.status === "CLOSED"
+                        ? new Date(item.updatedAt).toLocaleString()
+                        : new Date(item.createdAt).toLocaleString()}
+                    </Text>
                   </View>
-                  {item.remainingAmount <= 0 && (
+                  {item.status === "OPEN" && item.remainingAmount <= 0 && (
                     <TouchableOpacity
                       onPress={() => handleCloseCommand(item.id)}
                       style={{
@@ -796,182 +831,191 @@ export default function CommandsScreen() {
             </View>
           </Modal>
 
-          <View
-            style={{
-              marginBottom: 8,
-              backgroundColor: "white",
-              padding: 15,
-              borderRadius: 8,
-              elevation: 2,
-            }}
-          >
+          {selectedCommand.status === "OPEN" && (
             <View
-              style={{ flexDirection: "row", justifyContent: "space-between" }}
-            >
-              <Text
-                style={{ fontSize: 16, fontWeight: "bold", marginBottom: 2 }}
-              >
-                {editingItem ? "Editar Item" : "Adicionar Item"}
-              </Text>
-              <TouchableOpacity
-                style={{
-                  alignItems: "center",
-                  backgroundColor: minimizedMenu ? "#28a745" : "#dc3545",
-                  padding: 8,
-                  borderRadius: 5,
-                }}
-                onPress={() => setMinimizedMenu(!minimizedMenu)}
-              >
-                <Text>{minimizedMenu ? "Expandir" : "Minimizar"}</Text>
-              </TouchableOpacity>
-            </View>
-
-            <Text style={{ marginBottom: 0 }}>Item do Menu:</Text>
-            <ScrollView
               style={{
-                maxHeight:
-                  newItem.menuItemId && !minimizedMenu
-                    ? 200
-                    : minimizedMenu
-                    ? 0
-                    : 350,
-                marginBottom: 4,
-                borderRadius: 6,
-                borderWidth: 1,
-                borderColor: "#e0e0e0",
+                marginBottom: 8,
+                backgroundColor: "white",
+                padding: 15,
+                borderRadius: 8,
+                elevation: 2,
               }}
             >
-              {menuItems.map((item) => (
-                <TouchableOpacity
-                  key={item.id}
-                  onPress={() =>
-                    setNewItem({ ...newItem, menuItemId: item.id })
-                  }
-                  style={{
-                    padding: 12,
-                    backgroundColor:
-                      newItem.menuItemId === item.id ? "#e3f2fd" : "white",
-                    borderBottomWidth: 1,
-                    borderBottomColor: "#f5f5f5",
-                  }}
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                }}
+              >
+                <Text
+                  style={{ fontSize: 16, fontWeight: "bold", marginBottom: 2 }}
                 >
+                  {editingItem ? "Editar Item" : "Adicionar Item"}
+                </Text>
+                <TouchableOpacity
+                  style={{
+                    alignItems: "center",
+                    backgroundColor: minimizedMenu ? "#28a745" : "#dc3545",
+                    padding: 8,
+                    borderRadius: 5,
+                  }}
+                  onPress={() => setMinimizedMenu(!minimizedMenu)}
+                >
+                  <Text>{minimizedMenu ? "Expandir" : "Minimizar"}</Text>
+                </TouchableOpacity>
+              </View>
+
+              <Text style={{ marginBottom: 0 }}>Item do Menu:</Text>
+              <ScrollView
+                style={{
+                  maxHeight:
+                    newItem.menuItemId && !minimizedMenu
+                      ? 200
+                      : minimizedMenu
+                      ? 0
+                      : 350,
+                  marginBottom: 4,
+                  borderRadius: 6,
+                  borderWidth: 1,
+                  borderColor: "#e0e0e0",
+                }}
+              >
+                {menuItems.map((item) => (
+                  <TouchableOpacity
+                    key={item.id}
+                    onPress={() =>
+                      setNewItem({
+                        ...newItem,
+                        menuItemId: item.id,
+                        price: item.price,
+                      })
+                    }
+                    style={{
+                      padding: 12,
+                      backgroundColor:
+                        newItem.menuItemId === item.id ? "#e3f2fd" : "white",
+                      borderBottomWidth: 1,
+                      borderBottomColor: "#f5f5f5",
+                    }}
+                  >
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <Text style={{ fontWeight: "500" }}>{item.name}</Text>
+                      <Text style={{ color: "#28a745" }}>
+                        R$ {item.price.toFixed(2)}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+
+              {((newItem.menuItemId && !minimizedMenu) || editingItem) && (
+                <>
+                  <Text style={{ marginBottom: 5 }}>Quantidade:</Text>
+                  <TextInput
+                    value={newItem.quantity}
+                    onChangeText={(text) =>
+                      setNewItem({ ...newItem, quantity: text })
+                    }
+                    keyboardType="numeric"
+                    style={{
+                      borderWidth: 1,
+                      borderColor: "#ddd",
+                      padding: 10,
+                      marginBottom: 4,
+                      borderRadius: 5,
+                      color: "#000000",
+                    }}
+                  />
+
+                  <Text style={{ marginBottom: 5 }}>Observações:</Text>
+                  <TextInput
+                    value={newItem.notes}
+                    onChangeText={(text) =>
+                      setNewItem({ ...newItem, notes: text })
+                    }
+                    style={{
+                      borderWidth: 1,
+                      borderColor: "#ddd",
+                      padding: 10,
+                      marginBottom: 8,
+                      borderRadius: 5,
+                      color: "#000000",
+                    }}
+                  />
+
                   <View
                     style={{
                       flexDirection: "row",
                       justifyContent: "space-between",
                     }}
                   >
-                    <Text style={{ fontWeight: "500" }}>{item.name}</Text>
-                    <Text style={{ color: "#28a745" }}>
-                      R$ {item.price.toFixed(2)}
-                    </Text>
+                    {editingItem ? (
+                      <>
+                        <TouchableOpacity
+                          onPress={cancelEditing}
+                          style={{
+                            backgroundColor: "#6c757d",
+                            padding: 10,
+                            borderRadius: 5,
+                            width: "48%",
+                            alignItems: "center",
+                          }}
+                        >
+                          <Text style={{ color: "white" }}>Cancelar</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          onPress={handleUpdateCommandItem}
+                          style={{
+                            backgroundColor: "#28a745",
+                            padding: 10,
+                            borderRadius: 5,
+                            width: "48%",
+                            alignItems: "center",
+                          }}
+                        >
+                          <Text style={{ color: "white" }}>Salvar</Text>
+                        </TouchableOpacity>
+                      </>
+                    ) : (
+                      <>
+                        <TouchableOpacity
+                          onPress={() =>
+                            setNewItem({ ...newItem, menuItemId: "" })
+                          }
+                          style={{
+                            backgroundColor: "#6c757d",
+                            padding: 10,
+                            borderRadius: 5,
+                            width: "48%",
+                            alignItems: "center",
+                          }}
+                        >
+                          <Text style={{ color: "white" }}>Cancelar</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          onPress={handleAddItemToCommand}
+                          style={{
+                            backgroundColor: "#28a745",
+                            padding: 10,
+                            borderRadius: 5,
+                            width: "48%",
+                            alignItems: "center",
+                          }}
+                        >
+                          <Text style={{ color: "white" }}>Adicionar Item</Text>
+                        </TouchableOpacity>
+                      </>
+                    )}
                   </View>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-
-            {((newItem.menuItemId && !minimizedMenu) || editingItem) && (
-              <>
-                <Text style={{ marginBottom: 5 }}>Quantidade:</Text>
-                <TextInput
-                  value={newItem.quantity}
-                  onChangeText={(text) =>
-                    setNewItem({ ...newItem, quantity: text })
-                  }
-                  keyboardType="numeric"
-                  style={{
-                    borderWidth: 1,
-                    borderColor: "#ddd",
-                    padding: 10,
-                    marginBottom: 4,
-                    borderRadius: 5,
-                    color: "#000000",
-                  }}
-                />
-
-                <Text style={{ marginBottom: 5 }}>Observações:</Text>
-                <TextInput
-                  value={newItem.notes}
-                  onChangeText={(text) =>
-                    setNewItem({ ...newItem, notes: text })
-                  }
-                  style={{
-                    borderWidth: 1,
-                    borderColor: "#ddd",
-                    padding: 10,
-                    marginBottom: 8,
-                    borderRadius: 5,
-                    color: "#000000",
-                  }}
-                />
-
-                <View
-                  style={{
-                    flexDirection: "row",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  {editingItem ? (
-                    <>
-                      <TouchableOpacity
-                        onPress={cancelEditing}
-                        style={{
-                          backgroundColor: "#6c757d",
-                          padding: 10,
-                          borderRadius: 5,
-                          width: "48%",
-                          alignItems: "center",
-                        }}
-                      >
-                        <Text style={{ color: "white" }}>Cancelar</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        onPress={handleUpdateCommandItem}
-                        style={{
-                          backgroundColor: "#28a745",
-                          padding: 10,
-                          borderRadius: 5,
-                          width: "48%",
-                          alignItems: "center",
-                        }}
-                      >
-                        <Text style={{ color: "white" }}>Salvar</Text>
-                      </TouchableOpacity>
-                    </>
-                  ) : (
-                    <>
-                      <TouchableOpacity
-                        onPress={() =>
-                          setNewItem({ ...newItem, menuItemId: "" })
-                        }
-                        style={{
-                          backgroundColor: "#6c757d",
-                          padding: 10,
-                          borderRadius: 5,
-                          width: "48%",
-                          alignItems: "center",
-                        }}
-                      >
-                        <Text style={{ color: "white" }}>Cancelar</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        onPress={handleAddItemToCommand}
-                        style={{
-                          backgroundColor: "#28a745",
-                          padding: 10,
-                          borderRadius: 5,
-                          width: "48%",
-                          alignItems: "center",
-                        }}
-                      >
-                        <Text style={{ color: "white" }}>Adicionar Item</Text>
-                      </TouchableOpacity>
-                    </>
-                  )}
-                </View>
-              </>
-            )}
-          </View>
+                </>
+              )}
+            </View>
+          )}
 
           <Text style={{ fontSize: 16, fontWeight: "bold", marginBottom: 10 }}>
             Itens da Comanda:
@@ -1086,19 +1130,21 @@ export default function CommandsScreen() {
                 </Text>
               </View>
               <View style={{ flexDirection: "column", gap: 4 }}>
-                <TouchableOpacity
-                  onPress={() => setPaymentModalVisible(true)}
-                  style={{
-                    backgroundColor: "#28a745",
-                    padding: 6,
-                    borderRadius: 5,
-                    marginRight: 10,
-                    minWidth: 70,
-                    alignItems: "center",
-                  }}
-                >
-                  <Text style={{ color: "white" }}>Pagar</Text>
-                </TouchableOpacity>
+                {selectedCommand.status === "OPEN" && (
+                  <TouchableOpacity
+                    onPress={() => setPaymentModalVisible(true)}
+                    style={{
+                      backgroundColor: "#28a745",
+                      padding: 6,
+                      borderRadius: 5,
+                      marginRight: 10,
+                      minWidth: 70,
+                      alignItems: "center",
+                    }}
+                  >
+                    <Text style={{ color: "white" }}>Pagar</Text>
+                  </TouchableOpacity>
+                )}
                 <TouchableOpacity
                   onPress={loadPayments}
                   style={{

@@ -118,7 +118,7 @@ export async function GET(req: NextRequest) {
       }
       salesByProduct[item.menuItemId].quantitySold += item.quantity;
       salesByProduct[item.menuItemId].totalRevenue +=
-        item.quantity * item.menuItem.price;
+        item.quantity * item.unitPrice;
     });
   });
 
@@ -201,7 +201,7 @@ export async function GET(req: NextRequest) {
         console.log("isOpenCommand", isOpenCommand);
         if (!isOpenCommand) {
           itemsSold += item.quantity;
-          totalRevenue += item.quantity * item.menuItem.price;
+          totalRevenue += item.quantity * item.unitPrice;
         }
       });
 

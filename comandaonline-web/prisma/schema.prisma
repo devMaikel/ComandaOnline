@@ -123,6 +123,7 @@ model CommandItem {
   menuItem      MenuItem    @relation(fields: [menuItemId], references: [id])
   menuItemId    String
   quantity      Int
+  unitPrice     Float
   notes         String?
   addedBy       User           @relation("CommandItemAddedBy", fields: [addedById], references: [id])
   addedById     String

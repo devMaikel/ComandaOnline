@@ -146,7 +146,7 @@ export async function GET(req: NextRequest) {
         );
         if (!isOpenCommand) {
           itemsSold += item.quantity;
-          totalRevenue += item.quantity * item.menuItem.price;
+          totalRevenue += item.quantity * item.unitPrice;
         }
       });
 
