@@ -82,6 +82,26 @@ export async function getOpenCommands(barId: string): Promise<Command[]> {
   return await response.json();
 }
 
+export async function getClosedCommands(barId: string): Promise<Command[]> {
+  const token = await getToken();
+  const response = await fetch(
+    `${API_URL}/commands?barId=${barId}?status=CLOSED`,
+    {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || "Erro ao buscar comandas fechadas");
+  }
+
+  return await response.json();
+}
+
 export async function closeCommand(commandId: string): Promise<Command> {
   const token = await getToken();
   const response = await fetch(`${API_URL}/commands?commandId=${commandId}`, {

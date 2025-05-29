@@ -363,7 +363,7 @@ export default function LoginScreen() {
 
                 <TextInput
                   placeholder="Nome do estabelecimento"
-                  placeholderTextColor="#999"
+                  placeholderTextColor="#666666"
                   value={barName}
                   onChangeText={setBarName}
                   style={{
@@ -375,6 +375,7 @@ export default function LoginScreen() {
                     marginBottom: 16,
                     backgroundColor: "#fff",
                     fontSize: 16,
+                    color: "#000000",
                   }}
                 />
 
@@ -456,7 +457,7 @@ export default function LoginScreen() {
 
                 <TextInput
                   placeholder="Email do garçom"
-                  placeholderTextColor="#999"
+                  placeholderTextColor="#666666"
                   value={waiterEmail}
                   onChangeText={setWaiterEmail}
                   autoCapitalize="none"
@@ -470,12 +471,13 @@ export default function LoginScreen() {
                     marginBottom: 16,
                     backgroundColor: "#fff",
                     fontSize: 16,
+                    color: "#000000",
                   }}
                 />
 
                 <TextInput
                   placeholder="Nome / Apelido"
-                  placeholderTextColor="#999"
+                  placeholderTextColor="#666666"
                   value={waiterName}
                   onChangeText={setWaiterName}
                   style={{
@@ -487,12 +489,13 @@ export default function LoginScreen() {
                     marginBottom: 16,
                     backgroundColor: "#fff",
                     fontSize: 16,
+                    color: "#000000",
                   }}
                 />
 
                 <TextInput
                   placeholder="Senha"
-                  placeholderTextColor="#999"
+                  placeholderTextColor="#666666"
                   secureTextEntry
                   value={waiterPassword}
                   onChangeText={setWaiterPassword}
@@ -505,6 +508,7 @@ export default function LoginScreen() {
                     marginBottom: 16,
                     backgroundColor: "#fff",
                     fontSize: 16,
+                    color: "#000000",
                   }}
                 />
                 <View
@@ -603,12 +607,12 @@ export default function LoginScreen() {
                 marginBottom: 24,
               }}
             >
-              Criar Conta
+              Criar Contaa
             </Text>
 
             <TextInput
               placeholder="E-mail"
-              placeholderTextColor="#999"
+              placeholderTextColor="#666666"
               value={email}
               onChangeText={setEmail}
               autoCapitalize="none"
@@ -622,12 +626,13 @@ export default function LoginScreen() {
                 marginBottom: 16,
                 backgroundColor: "#fff",
                 fontSize: 16,
+                color: "#000000",
               }}
             />
 
             <TextInput
               placeholder="Senha"
-              placeholderTextColor="#999"
+              placeholderTextColor="#666666"
               value={password}
               onChangeText={setPassword}
               secureTextEntry
@@ -640,6 +645,7 @@ export default function LoginScreen() {
                 marginBottom: 16,
                 backgroundColor: "#fff",
                 fontSize: 16,
+                color: "#000000",
               }}
             />
 
@@ -721,7 +727,7 @@ export default function LoginScreen() {
 
           <TextInput
             placeholder="E-mail"
-            placeholderTextColor="#999"
+            placeholderTextColor="#666666"
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
@@ -735,12 +741,13 @@ export default function LoginScreen() {
               marginBottom: 16,
               backgroundColor: "#fff",
               fontSize: 16,
+              color: "#000000",
             }}
           />
 
           <TextInput
             placeholder="Senha"
-            placeholderTextColor="#999"
+            placeholderTextColor="#666666"
             value={password}
             onChangeText={setPassword}
             secureTextEntry
@@ -753,6 +760,7 @@ export default function LoginScreen() {
               marginBottom: 16,
               backgroundColor: "#fff",
               fontSize: 16,
+              color: "#000000",
             }}
           />
 

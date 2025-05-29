@@ -54,7 +54,7 @@ export async function POST(req: Request) {
 
     const newWaiter = await prisma.user.create({
       data: {
-        email,
+        email: email.toLowerCase(),
         password: hashedPassword,
         role: isManager ? "MANAGER" : "WAITER",
         name,

@@ -82,6 +82,7 @@ export default function CommandsScreen() {
 
     try {
       showLoading();
+      setPaymentModalVisible(false);
       const amount = parseFloat(paymentData.amount);
       await addPayment(
         selectedCommand.id,
@@ -98,7 +99,6 @@ export default function CommandsScreen() {
       };
 
       setSelectedCommand(updatedCommand);
-      setPaymentModalVisible(false);
       setPaymentData({ amount: "", paymentType: "CASH", note: "" });
       refresh();
       Alert.alert("Sucesso", "Pagamento registrado com sucesso");
@@ -463,7 +463,7 @@ export default function CommandsScreen() {
                 </ScrollView>
                 <TextInput
                   placeholder="Nome da comanda"
-                  placeholderTextColor="#999"
+                  placeholderTextColor="#666666"
                   value={newCommandName}
                   onChangeText={setNewCommandName}
                   style={{
@@ -475,6 +475,7 @@ export default function CommandsScreen() {
                     marginBottom: 16,
                     backgroundColor: "#fff",
                     fontSize: 16,
+                    color: "#000000",
                   }}
                 />
 
@@ -556,17 +557,19 @@ export default function CommandsScreen() {
                       </Text>
                     )}
                   </View>
-                  <TouchableOpacity
-                    onPress={() => handleCloseCommand(item.id)}
-                    style={{
-                      backgroundColor: "#dc3545",
-                      padding: 8,
-                      borderRadius: 5,
-                      justifyContent: "center",
-                    }}
-                  >
-                    <Text style={{ color: "white" }}>Fechar conta</Text>
-                  </TouchableOpacity>
+                  {item.remainingAmount <= 0 && (
+                    <TouchableOpacity
+                      onPress={() => handleCloseCommand(item.id)}
+                      style={{
+                        backgroundColor: "#dc3545",
+                        padding: 8,
+                        borderRadius: 5,
+                        justifyContent: "center",
+                      }}
+                    >
+                      <Text style={{ color: "white" }}>Fechar conta</Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
               </TouchableOpacity>
             )}
@@ -660,7 +663,7 @@ export default function CommandsScreen() {
                 <Text style={{ marginBottom: 5 }}>Valor:</Text>
                 <TextInput
                   placeholder="0.00"
-                  placeholderTextColor="#999"
+                  placeholderTextColor="#666666"
                   value={paymentData.amount}
                   onChangeText={(text) =>
                     setPaymentData({ ...paymentData, amount: text })
@@ -675,6 +678,7 @@ export default function CommandsScreen() {
                     marginBottom: 16,
                     backgroundColor: "#fff",
                     fontSize: 16,
+                    color: "#000000",
                   }}
                 />
 
@@ -731,7 +735,7 @@ export default function CommandsScreen() {
                 <Text style={{ marginBottom: 5 }}>Observação (opcional):</Text>
                 <TextInput
                   placeholder="Ex: Cliente pagou metade"
-                  placeholderTextColor="#999"
+                  placeholderTextColor="#666666"
                   value={paymentData.note}
                   onChangeText={(text) =>
                     setPaymentData({ ...paymentData, note: text })
@@ -745,6 +749,7 @@ export default function CommandsScreen() {
                     marginBottom: 16,
                     backgroundColor: "#fff",
                     fontSize: 16,
+                    color: "#000000",
                   }}
                 />
 
@@ -880,6 +885,7 @@ export default function CommandsScreen() {
                     padding: 10,
                     marginBottom: 4,
                     borderRadius: 5,
+                    color: "#000000",
                   }}
                 />
 
@@ -895,6 +901,7 @@ export default function CommandsScreen() {
                     padding: 10,
                     marginBottom: 8,
                     borderRadius: 5,
+                    color: "#000000",
                   }}
                 />
 

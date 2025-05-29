@@ -229,6 +229,8 @@ export default function TablesScreen() {
                 padding: 10,
                 marginBottom: 15,
                 borderRadius: 5,
+                color: "#000000",
+                backgroundColor: "#fff",
               }}
               placeholder="Digite o número da mesa"
             />

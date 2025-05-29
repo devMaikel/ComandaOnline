@@ -303,6 +303,7 @@ export default function MenuScreen() {
           <>
             <TextInput
               placeholder="Nome do item"
+              placeholderTextColor="#666666"
               value={newItemName}
               onChangeText={setNewItemName}
               style={{
@@ -311,11 +312,14 @@ export default function MenuScreen() {
                 padding: 10,
                 marginBottom: 10,
                 borderRadius: 5,
+                color: "#000000",
+                backgroundColor: "#fff",
               }}
             />
 
             <TextInput
               placeholder="Preço"
+              placeholderTextColor="#666666"
               value={newItemPrice}
               onChangeText={setNewItemPrice}
               keyboardType="numeric"
@@ -325,6 +329,8 @@ export default function MenuScreen() {
                 padding: 10,
                 marginBottom: 15,
                 borderRadius: 5,
+                color: "#000000",
+                backgroundColor: "#fff",
               }}
             />
           </>

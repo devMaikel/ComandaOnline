@@ -186,11 +186,16 @@ export async function GET(req: NextRequest) {
     );
   }
 
+  const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000);
+
   const commands = await prisma.command.findMany({
     where: {
       barId,
       deletedAt: null,
       status: status as "OPEN" | "CLOSED",
+      createdAt: {
+        gte: twelveHoursAgo,
+      },
     },
     orderBy: {
       createdAt: status === "OPEN" ? "desc" : "desc",
